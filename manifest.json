@@ -2,7 +2,7 @@
   "name": "Mi Dashboard de Noticias",
   "short_name": "Noticias",
   "description": "Dashboard personal de noticias con clustering cross-source y balance de sesgo. 30 minutos al día.",
-  "start_url": "./dashboard_v2.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
