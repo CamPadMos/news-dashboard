@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mi Dashboard de Noticias</title>
+  <meta name="theme-color" content="#09090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Noticias">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
+    .article-title { font-family: 'Charter', Georgia, serif; line-height: 1.3; }
+    .bias-chip { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+    .article-card { transition: all .15s ease; }
+    .article-card:hover { transform: translateY(-1px); border-color: #71717a; }
+    .read { opacity: .4; }
+    .scroll-mt { scroll-margin-top: 110px; }
+    .modal-bg { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+    .badge { font-size: .65rem; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+    .badge-paywall-hard    { background: #7f1d1d; color: #fecaca; }
+    .badge-paywall-metered { background: #78350f; color: #fed7aa; }
+    .badge-free            { background: #14532d; color: #bbf7d0; }
+    .cluster-card { background: linear-gradient(180deg, rgba(168,85,247,0.06), transparent); border-color: #44403c; }
+    @keyframes pulse-fade { 0%,100% { opacity: .3 } 50% { opacity: .6 } }
+    .loading { animation: pulse-fade 1.5s ease-in-out infinite; }
+    .balance-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #27272a; }
+    .balance-bar > div { transition: flex .3s ease; }
+    /* Mobile-specific tweaks */
+    @media (max-width: 640px) {
+      .article-title { font-size: 0.95rem; }
+      header h1 { font-size: 1rem; }
+      .scroll-mt { scroll-margin-top: 130px; }
+    }
+    /* Better tap targets on touch devices */
+    @media (hover: none) {
+      button, a { -webkit-tap-highlight-color: rgba(255,255,255,0.1); }
+      .article-card { padding: 0.75rem; }
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+
+  <!-- ============= HEADER ============= -->
+  <header class="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
+      <div class="min-w-0 flex-shrink">
+        <h1 class="text-base sm:text-lg font-semibold tracking-tight truncate">Mi Dashboard</h1>
+        <p class="text-[10px] sm:text-xs text-zinc-500 truncate" id="last-refresh">Sin actualizar</p>
+      </div>
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <span id="timer" class="text-[11px] sm:text-xs text-zinc-500 font-mono"></span>
+        <button id="start-timer" class="text-[11px] sm:text-xs px-2 py-1 rounded border border-zinc-700 hover:bg-zinc-800 active:bg-zinc-800 whitespace-nowrap">⏱ 30m</button>
+        <button id="refresh-btn" class="text-[11px] sm:text-xs px-2 sm:px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 border border-zinc-700">↻</button>
+      </div>
+    </div>
+    <nav class="max-w-6xl mx-auto px-4 pb-2 flex gap-3 overflow-x-auto text-xs text-zinc-400">
+      <a href="#clusters" class="hover:text-zinc-100 whitespace-nowrap">🔥 Clusters</a>
+      <a href="#tech" class="hover:text-zinc-100 whitespace-nowrap">💻 Tech</a>
+      <a href="#economy" class="hover:text-zinc-100 whitespace-nowrap">📈 Economía</a>
+      <a href="#colombia" class="hover:text-zinc-100 whitespace-nowrap">🌎 Colombia</a>
+      <a href="#international" class="hover:text-zinc-100 whitespace-nowrap">🌍 Internacional</a>
+      <a href="#usa" class="hover:text-zinc-100 whitespace-nowrap">🇺🇸 EE.UU.</a>
+      <a href="#longform" class="hover:text-zinc-100 whitespace-nowrap">📚 Longform</a>
+    </nav>
+  </header>
+
+  <!-- ============= BALANCE + CONTROLS ============= -->
+  <section class="max-w-6xl mx-auto px-4 py-4 border-b border-zinc-900 space-y-3">
+    <div class="flex items-baseline justify-between">
+      <h2 class="text-xs uppercase tracking-wider text-zinc-400">Balance de sesgo · últimos 7 días</h2>
+      <button id="export-log" class="text-xs text-zinc-500 hover:text-zinc-200 underline">Exportar reading-log</button>
+    </div>
+    <div id="balance" class="space-y-2">
+      <div class="balance-bar" id="balance-bar"></div>
+      <div id="balance-legend" class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400"></div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 pt-1 text-xs">
+      <span class="text-zinc-500">Vista:</span>
+      <button data-view="clusters" class="view-toggle px-2 py-1 rounded border border-zinc-700">Clusters + categorías</button>
+      <button data-view="source" class="view-toggle px-2 py-1 rounded border border-zinc-700">Por fuente</button>
+      <label class="ml-auto text-zinc-400 flex items-center gap-1 cursor-pointer">
+        <input type="checkbox" id="only-free" class="accent-emerald-500"> solo fuentes 100% gratis
+      </label>
+    </div>
+  </section>
+
+  <!-- ============= MAIN ============= -->
+  <main id="content" class="max-w-6xl mx-auto px-4 py-6 space-y-10">
+    <div id="loading-state" class="text-center py-20 text-zinc-500">
+      <div class="loading">Cargando feeds…</div>
+      <div class="text-xs mt-2">Esto puede tomar 20-40 segundos la primera vez.</div>
+    </div>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-4 py-8 text-xs text-zinc-600 text-center">
+    Sistema personal · 30 min al día · Una idea entendida vale más que 50 titulares escaneados.
+  </footer>
+
+  <!-- ============= NOTE MODAL ============= -->
+  <div id="note-modal" class="fixed inset-0 hidden modal-bg z-50 items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-700 rounded-lg max-w-lg w-full p-5 space-y-3">
+      <h3 class="text-sm font-semibold">Nota rápida</h3>
+      <div id="modal-meta" class="text-xs text-zinc-400"></div>
+      <textarea id="modal-text" rows="4" placeholder="1-3 frases sobre por qué este artículo te importa o qué aprendiste..." class="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-sm resize-none focus:outline-none focus:border-zinc-500"></textarea>
+      <div class="flex justify-between items-center text-xs">
+        <label class="text-zinc-400 flex items-center gap-1 cursor-pointer">
+          <input type="checkbox" id="modal-add-log" checked> agregar al reading-log
+        </label>
+        <div class="flex gap-2">
+          <button id="modal-cancel" class="px-3 py-1 rounded border border-zinc-700 hover:bg-zinc-800">Cancelar</button>
+          <button id="modal-copy" class="px-3 py-1 rounded bg-zinc-100 text-zinc-900 hover:bg-white">Copiar</button>
+        </div>
+      </div>
+      <p class="text-xs text-zinc-500">El texto se copia al portapapeles formateado en markdown. Pégalo en tu carpeta /notes.</p>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// CONFIG — fuentes, sesgos y paywalls
+// ============================================================
+const CONFIG = {
+  categories: {
+    tech:          { name: "Tecnología, IA y software", icon: "💻", order: 1 },
+    economy:       { name: "Economía y finanzas",        icon: "📈", order: 2 },
+    colombia:      { name: "Colombia y Latinoamérica",   icon: "🌎", order: 3 },
+    international: { name: "Internacional / Geopolítica",icon: "🌍", order: 4 },
+    usa:           { name: "Estados Unidos",             icon: "🇺🇸", order: 5 },
+    longform:      { name: "Longform y desarrollo personal", icon: "📚", order: 6 }
+  },
+  biases: {
+    "left":         { label: "Izquierda",      color: "#3b82f6", group: "left" },
+    "center-left":  { label: "Centro-izq",     color: "#60a5fa", group: "left" },
+    "center":       { label: "Centro",         color: "#9ca3af", group: "center" },
+    "center-right": { label: "Centro-der",     color: "#fb923c", group: "right" },
+    "right":        { label: "Derecha",        color: "#ef4444", group: "right" },
+    "neutral":      { label: "Agencia",        color: "#10b981", group: "neutral" },
+    "academic":     { label: "Académico",      color: "#a78bfa", group: "academic" },
+    "community":    { label: "Comunidad",      color: "#fbbf24", group: "neutral" },
+    "na":           { label: "—",              color: "#6b7280", group: "neutral" }
+  },
+  // type: none | metered | hard
+  paywalls: {
+    "MIT Technology Review":{ type:"metered", free_per_month:3 },
+    "Stratechery":          { type:"metered", free_per_month:1 },
+    "Financial Times":      { type:"metered", free_per_month:1, alternatives:["Reuters","Bloomberg Markets","The Economist"] },
+    "The Economist":        { type:"metered", free_per_month:1, alternatives:["Reuters","Foreign Affairs"] },
+    "Bloomberg Markets":    { type:"metered", free_per_month:5, alternatives:["Reuters Business"] },
+    "Wall Street Journal":  { type:"hard",    alternatives:["Reuters Business","Bloomberg Markets","Axios"] },
+    "El Tiempo":            { type:"metered", free_per_month:10 },
+    "El Espectador":        { type:"metered", free_per_month:10 },
+    "Semana":               { type:"metered", free_per_month:5 },
+    "La Silla Vacía":       { type:"hard",    alternatives:["El Espectador","El Tiempo"] },
+    "Foreign Affairs":      { type:"metered", free_per_month:1, alternatives:["BBC News","Al Jazeera English"] },
+    "The New York Times":   { type:"metered", free_per_month:5, alternatives:["Associated Press","NPR","The Washington Post"] },
+    "The Washington Post":  { type:"metered", free_per_month:4, alternatives:["Associated Press","NPR","Politico"] },
+    "The Atlantic":         { type:"metered", free_per_month:5, alternatives:["The Guardian","Aeon"] }
+  },
+  sources: [
+    {name:"Ars Technica",          category:"tech",     bias:"center",       feed:"https://feeds.arstechnica.com/arstechnica/index"},
+    {name:"Hacker News",           category:"tech",     bias:"community",    feed:"https://hnrss.org/frontpage"},
+    {name:"MIT Technology Review", category:"tech",     bias:"academic",     feed:"https://www.technologyreview.com/feed/"},
+    {name:"The Verge",             category:"tech",     bias:"center-left",  feed:"https://www.theverge.com/rss/index.xml"},
+    {name:"Anthropic",             category:"tech",     bias:"na",           feed:"https://www.anthropic.com/news/rss.xml"},
+    {name:"Stratechery",           category:"tech",     bias:"center",       feed:"https://stratechery.com/feed/"},
+    {name:"Reuters Business",      category:"economy",  bias:"neutral",      feed:"https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best"},
+    {name:"Financial Times",       category:"economy",  bias:"center",       feed:"https://www.ft.com/rss/home"},
+    {name:"The Economist",         category:"economy",  bias:"center-right", feed:"https://www.economist.com/the-world-this-week/rss.xml"},
+    {name:"Bloomberg Markets",     category:"economy",  bias:"center",       feed:"https://feeds.bloomberg.com/markets/news.rss"},
+    {name:"Wall Street Journal",   category:"economy",  bias:"center-right", feed:"https://feeds.a.dj.com/rss/RSSWorldNews.xml"},
+    {name:"El Tiempo",             category:"colombia", bias:"center-right", feed:"https://www.eltiempo.com/rss/colombia.xml"},
+    {name:"El Espectador",         category:"colombia", bias:"center-left",  feed:"https://www.elespectador.com/arc/outboundfeeds/rss/?outputType=xml"},
+    {name:"Semana",                category:"colombia", bias:"right",        feed:"https://www.semana.com/rss/"},
+    {name:"La Silla Vacía",        category:"colombia", bias:"center",       feed:"https://www.lasillavacia.com/feed/"},
+    {name:"BBC Mundo",             category:"colombia", bias:"center",       feed:"https://feeds.bbci.co.uk/mundo/rss.xml"},
+    {name:"Reuters",               category:"international", bias:"neutral", feed:"https://www.reutersagency.com/feed/?best-topics=top-news&post_type=best"},
+    {name:"Associated Press",      category:"international", bias:"neutral", feed:"https://rsshub.app/apnews/topics/apf-topnews"},
+    {name:"BBC News",              category:"international", bias:"center",  feed:"https://feeds.bbci.co.uk/news/world/rss.xml"},
+    {name:"Al Jazeera English",    category:"international", bias:"center",  feed:"https://www.aljazeera.com/xml/rss/all.xml"},
+    {name:"The Guardian",          category:"international", bias:"left",    feed:"https://www.theguardian.com/world/rss"},
+    {name:"Foreign Affairs",       category:"international", bias:"academic",feed:"https://www.foreignaffairs.com/rss.xml"},
+    {name:"NPR",                   category:"usa",      bias:"center-left",  feed:"https://feeds.npr.org/1001/rss.xml"},
+    {name:"The New York Times",    category:"usa",      bias:"center-left",  feed:"https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"},
+    {name:"The Washington Post",   category:"usa",      bias:"center-left",  feed:"https://feeds.washingtonpost.com/rss/world"},
+    {name:"Politico",              category:"usa",      bias:"center",       feed:"https://rss.politico.com/politics-news.xml"},
+    {name:"Axios",                 category:"usa",      bias:"center",       feed:"https://api.axios.com/feed/"},
+    {name:"The Atlantic",          category:"usa",      bias:"center-left",  feed:"https://www.theatlantic.com/feed/all/"},
+    {name:"Aeon",                  category:"longform", bias:"academic",     feed:"https://aeon.co/feed.rss"},
+    {name:"Farnam Street",         category:"longform", bias:"na",           feed:"https://fs.blog/feed/"},
+    {name:"Paul Graham Essays",    category:"longform", bias:"na",           feed:"http://www.aaronsw.com/2002/feeds/pgessays.rss"}
+  ]
+};
+
+// ============================================================
+// State
+// ============================================================
+let state = {
+  items: [],
+  errors: [],
+  view: (typeof localStorage !== "undefined" ? localStorage.getItem("view") : null) || "clusters",
+  onlyFree: (typeof localStorage !== "undefined" ? localStorage.getItem("onlyFree") : null) === "1"
+};
+
+// ============================================================
+// RSS fetching via AllOrigins CORS proxy
+// ============================================================
+const PROXY = "https://api.allorigins.win/raw?url=";
+async function fetchFeed(source) {
+  try {
+    const url = PROXY + encodeURIComponent(source.feed);
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 15000);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const xml = await res.text();
+    return { source, items: parseRSS(xml, source) };
+  } catch (e) {
+    return { source, items: [], error: e.message };
+  }
+}
+function parseRSS(xml, source) {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const rss = Array.from(doc.querySelectorAll("item")).slice(0, 5);
+  if (rss.length) return rss.map(it => mkItem(it, source, "rss"));
+  const atom = Array.from(doc.querySelectorAll("entry")).slice(0, 5);
+  return atom.map(it => mkItem(it, source, "atom"));
+}
+function mkItem(el, source, kind) {
+  const title = (el.querySelector("title")?.textContent || "").trim();
+  const link = kind === "atom"
+    ? (el.querySelector("link")?.getAttribute("href") || "")
+    : (el.querySelector("link")?.textContent || el.querySelector("guid")?.textContent || "");
+  const dateStr = (el.querySelector("pubDate")?.textContent
+                  || el.querySelector("updated")?.textContent
+                  || el.querySelector("published")?.textContent || "");
+  const d = dateStr ? new Date(dateStr) : null;
+  return {
+    title, link,
+    pubDate: d && !isNaN(d) ? d : null,
+    source: source.name, bias: source.bias, category: source.category
+  };
+}
+
+// ============================================================
+// Time helper
+// ============================================================
+function timeAgo(d) {
+  if (!d) return "";
+  const s = Math.floor((Date.now() - d) / 1000);
+  if (s < 60) return "ahora";
+  if (s < 3600) return Math.floor(s/60) + "m";
+  if (s < 86400) return Math.floor(s/3600) + "h";
+  return Math.floor(s/86400) + "d";
+}
+function escapeHTML(s) {
+  return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// ============================================================
+// Clustering (keyword Jaccard, language-aware)
+// ============================================================
+const STOPWORDS = new Set([
+  // English
+  "the","a","an","and","or","but","of","to","for","in","on","at","by","with","from","as","is","are","was","were","be","been","being","this","that","these","those","it","its","has","have","had","will","would","could","should","may","might","can","says","said","new","reports","report","year","years","day","days","top","over","after","before","amid","into","about","more","than","first","second","last","one","two","three","not","no","up","down","off","out","why","what","how","when","where","who","which","just","also","still","really","very","most","many","some","such","like","near","under","while","because","since","through","across","against","without","via","among","between","along","around","upon","next","past","high","low","big","small","good","bad","old","young"
+  ,"news","story","update","video","photos","photo","watch","live","breaking","week","weeks","ago","yesterday","today","tomorrow","exclusive","analysis","editorial","opinion","comment"
+  // Spanish
+  ,"el","la","los","las","de","del","y","o","pero","con","sin","por","para","que","es","son","fue","fueron","ser","estar","esta","estas","ese","esa","esos","esas","este","estos","un","una","unos","unas","su","sus","al","lo","ya","no","sí","si","más","menos","muy","mucho","mucha","muchos","muchas","tras","entre","sobre","bajo","desde","hasta","cuando","donde","como","porque","cómo","qué","quién","cuál","aún","aun","tan","todo","toda","todos","todas","cada","otro","otra","otros","otras","mismo","misma","mismos","mismas","ante","tras","contra","hacia","durante","mediante","según","segun","ahora","hoy","ayer","mañana","sólo","solo"
+]);
+function tokenize(text) {
+  if (!text) return [];
+  return text
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "") // strip accents
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(w => w.length >= 4 && !STOPWORDS.has(w));
+}
+function jaccard(a, b) {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const x of a) if (b.has(x)) inter++;
+  return inter / (a.size + b.size - inter);
+}
+function clusterItems(items, threshold = 0.34, minSize = 2) {
+  const tokens = items.map(it => new Set(tokenize(it.title)));
+  const n = items.length;
+  // Union-find
+  const parent = Array.from({length:n}, (_,i)=>i);
+  const find = i => parent[i]===i ? i : (parent[i] = find(parent[i]));
+  const union = (a,b) => { const ra=find(a), rb=find(b); if (ra!==rb) parent[ra]=rb; };
+  for (let i = 0; i < n; i++) {
+    for (let j = i+1; j < n; j++) {
+      if (jaccard(tokens[i], tokens[j]) >= threshold) union(i, j);
+    }
+  }
+  const groups = {};
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    (groups[r] = groups[r] || []).push(items[i]);
+  }
+  const clusters = [];
+  const singletons = [];
+  Object.values(groups).forEach(g => {
+    // Only treat as cluster if it spans >=2 distinct sources
+    const distinctSources = new Set(g.map(x => x.source));
+    if (g.length >= minSize && distinctSources.size >= 2) clusters.push(g);
+    else singletons.push(...g);
+  });
+  // Sort clusters: more sources first, then more items
+  clusters.sort((a,b) => {
+    const sa = new Set(a.map(x=>x.source)).size;
+    const sb = new Set(b.map(x=>x.source)).size;
+    return sb - sa || b.length - a.length;
+  });
+  return { clusters, singletons };
+}
+
+// ============================================================
+// Render
+// ============================================================
+function paywallBadge(sourceName) {
+  const p = CONFIG.paywalls[sourceName];
+  if (!p) return `<span class="badge badge-free">gratis</span>`;
+  if (p.type === "hard") return `<span class="badge badge-paywall-hard" title="Paywall duro">paga</span>`;
+  if (p.type === "metered") return `<span class="badge badge-paywall-metered" title="${p.free_per_month||"?"} gratis/mes">${p.free_per_month||"?"}/mes</span>`;
+  return `<span class="badge badge-free">gratis</span>`;
+}
+function alternativesHint(sourceName) {
+  const p = CONFIG.paywalls[sourceName];
+  if (!p || !p.alternatives) return "";
+  return `<div class="text-xs text-zinc-500 mt-1">Alternativa gratis: ${p.alternatives.slice(0,2).join(" · ")}</div>`;
+}
+function articleCard(it, opts={}) {
+  const readSet = getReadSet();
+  const isRead = readSet.has(it.link);
+  const biasInfo = CONFIG.biases[it.bias] || CONFIG.biases.na;
+  return `
+    <div class="article-card block p-3 rounded border border-zinc-800 bg-zinc-900/30 ${isRead ? "read" : ""}">
+      <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
+        <span><span class="bias-chip" style="background:${biasInfo.color}"></span>${escapeHTML(it.source)} ${paywallBadge(it.source)}</span>
+        <span>${timeAgo(it.pubDate)}</span>
+      </div>
+      <a href="${escapeHTML(it.link)}" target="_blank" rel="noopener noreferrer"
+         class="article-title block text-zinc-100"
+         data-link="${escapeHTML(it.link)}">${escapeHTML(it.title)}</a>
+      ${opts.showAlts !== false ? alternativesHint(it.source) : ""}
+      <div class="flex items-center gap-3 mt-2 text-xs text-zinc-500">
+        <button class="hover:text-zinc-200 note-btn"
+                data-title="${escapeHTML(it.title)}"
+                data-link="${escapeHTML(it.link)}"
+                data-source="${escapeHTML(it.source)}"
+                data-bias="${escapeHTML(it.bias)}">📝 nota</button>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const main = document.getElementById("content");
+  let items = state.items;
+  if (state.onlyFree) {
+    items = items.filter(it => {
+      const p = CONFIG.paywalls[it.source];
+      return !p || p.type === "none" || (p.type === "metered" && (p.free_per_month||0) >= 5);
+    });
+  }
+
+  let html = "";
+
+  // Cluster view
+  if (state.view === "clusters") {
+    const { clusters, singletons } = clusterItems(items);
+    if (clusters.length) {
+      html += `<section id="clusters" class="scroll-mt">
+        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">🔥 Misma historia, varias fuentes <span class="text-zinc-600 ml-2">${clusters.length}</span></h2>
+        <div class="space-y-4">
+        ${clusters.map(g => {
+          const sources = new Set(g.map(x => x.source));
+          // Use the longest title as cluster headline
+          const head = g.slice().sort((a,b)=>b.title.length-a.title.length)[0];
+          return `<div class="cluster-card border rounded p-3">
+            <div class="text-xs uppercase tracking-wider text-zinc-500 mb-2">${sources.size} fuentes · ${g.length} artículos</div>
+            <div class="article-title text-base text-zinc-100 mb-3">${escapeHTML(head.title)}</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              ${g.map(it => articleCard(it, {showAlts:false})).join("")}
+            </div>
+          </div>`;
+        }).join("")}
+        </div>
+      </section>`;
+    }
+    // Then categories with singletons
+    const ordered = Object.entries(CONFIG.categories).sort((a,b)=>a[1].order-b[1].order);
+    for (const [cid, info] of ordered) {
+      const catItems = singletons.filter(x => x.category === cid)
+        .sort((a,b) => (b.pubDate?.getTime()||0) - (a.pubDate?.getTime()||0));
+      if (!catItems.length) continue;
+      html += `<section id="${cid}" class="scroll-mt">
+        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">${info.icon} ${info.name} <span class="text-zinc-600 ml-2">${catItems.length}</span></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${catItems.map(articleCard).join("")}
+        </div>
+      </section>`;
+    }
+  } else {
+    // Source view (by category like v1)
+    const ordered = Object.entries(CONFIG.categories).sort((a,b)=>a[1].order-b[1].order);
+    for (const [cid, info] of ordered) {
+      const catItems = items.filter(x => x.category === cid)
+        .sort((a,b) => (b.pubDate?.getTime()||0) - (a.pubDate?.getTime()||0));
+      if (!catItems.length) continue;
+      html += `<section id="${cid}" class="scroll-mt">
+        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">${info.icon} ${info.name} <span class="text-zinc-600 ml-2">${catItems.length}</span></h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${catItems.map(articleCard).join("")}
+        </div>
+      </section>`;
+    }
+  }
+
+  // Errors
+  if (state.errors.length) {
+    html += `<details class="border border-zinc-900 rounded p-3 text-xs text-zinc-500">
+      <summary class="cursor-pointer">${state.errors.length} fuente(s) no respondieron</summary>
+      <ul class="mt-2 space-y-1 ml-4">
+        ${state.errors.map(e => `<li>${escapeHTML(e.source.name)}: ${escapeHTML(e.error||"vacío")}</li>`).join("")}
+      </ul>
+    </details>`;
+  }
+
+  main.innerHTML = html || `<div class="text-center text-zinc-500 py-20">Sin artículos para mostrar.</div>`;
+
+  // Wire up note buttons
+  document.querySelectorAll(".note-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openNoteModal(btn.dataset);
+    });
+  });
+  // Mark read on click
+  document.querySelectorAll("a.article-title").forEach(a => {
+    a.addEventListener("click", () => {
+      markRead(a.dataset.link);
+      logRead(a.dataset.link, a.textContent.trim());
+    });
+  });
+
+  renderBalance();
+  updateViewToggles();
+}
+
+// ============================================================
+// Storage adapter
+// ============================================================
+// Toda la persistencia pasa por aqui. Hoy usa localStorage local.
+// Cuando agregues sincronizacion entre dispositivos, edita SOLO este
+// objeto + SYNC_CONFIG abajo. Ver ../sync/SYNC_PLAN.md para el plan.
+// ============================================================
+const SYNC_CONFIG = {
+  enabled: false,            // TRUE cuando tengas el worker desplegado
+  endpoint: "",              // ej: "https://news-sync.tu-cuenta.workers.dev"
+  token: "",                 // secreto compartido (header X-Auth-Token)
+  intervalMs: 60000,         // cada cuanto sincronizar (60s)
+  conflictStrategy: "merge"  // "merge" (union) | "remote-wins" | "local-wins"
+};
+
+const Storage = {
+  // --- Implementacion local (default) ---
+  _read(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw == null ? fallback : JSON.parse(raw);
+    } catch { return fallback; }
+  },
+  _write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  },
+
+  // --- API publica usada por el dashboard ---
+  getReadSet() { return new Set(this._read("readArticles", [])); },
+  setReadSet(set) {
+    this._write("readArticles", Array.from(set).slice(-500));
+    this._scheduleSync();
+  },
+
+  getLog() { return this._read("readingLog", []); },
+  setLog(arr) {
+    this._write("readingLog", arr.slice(-500));
+    this._scheduleSync();
+  },
+
+  getPref(key, fallback) {
+    const v = localStorage.getItem(key);
+    return v == null ? fallback : v;
+  },
+  setPref(key, val) {
+    try { localStorage.setItem(key, val); } catch {}
+  },
+
+  // --- Sincronizacion entre dispositivos ---
+  // Codigo real. Inerte hasta que SYNC_CONFIG.enabled = true y haya endpoint+token.
+  _syncTimer: null,
+  _syncInFlight: false,
+  _scheduleSync() {
+    if (!SYNC_CONFIG.enabled) return;
+    clearTimeout(this._syncTimer);
+    this._syncTimer = setTimeout(() => this.sync(), 2000);
+  },
+  async sync() {
+    if (!SYNC_CONFIG.enabled || !SYNC_CONFIG.endpoint || !SYNC_CONFIG.token) return;
+    if (this._syncInFlight) return;
+    this._syncInFlight = true;
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Auth-Token": SYNC_CONFIG.token
+      };
+      // PULL
+      let remote;
+      try {
+        const res = await fetch(SYNC_CONFIG.endpoint + "/state", { headers });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        remote = await res.json();
+      } catch (e) {
+        console.warn("Sync pull failed, sigo en local:", e.message);
+        return;
+      }
+      // MERGE
+      const local = this.snapshot();
+      const merged = mergeStates(local, remote);
+      // APPLY LOCAL
+      this.applySnapshot(merged);
+      // PUSH
+      try {
+        await fetch(SYNC_CONFIG.endpoint + "/state", {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(merged)
+        });
+      } catch (e) {
+        console.warn("Sync push failed:", e.message);
+      }
+      // Re-render (otras devices pudieron haber marcado articulos como leidos)
+      if (typeof render === "function") render();
+      if (typeof renderBalance === "function") renderBalance();
+    } finally {
+      this._syncInFlight = false;
+    }
+  },
+
+  // --- Helpers de snapshot ---
+  snapshot() {
+    return {
+      readArticles: Array.from(this.getReadSet()),
+      readingLog: this.getLog(),
+      lastModified: Date.now()
+    };
+  },
+  applySnapshot(s) {
+    if (s?.readArticles) this._write("readArticles", s.readArticles.slice(-500));
+    if (s?.readingLog)   this._write("readingLog",   s.readingLog.slice(-500));
+  }
+};
+
+// ============================================================
+// mergeStates — idempotente y conmutativo
+// Dos devices escribiendo simultaneo no se pisan: union de sets
+// + dedupe por link manteniendo la nota mas larga.
+// ============================================================
+function mergeStates(local, remote) {
+  const readArticles = Array.from(
+    new Set([...(local.readArticles || []), ...(remote.readArticles || [])])
+  ).slice(-1000);
+
+  const byLink = new Map();
+  for (const e of (local.readingLog || []).concat(remote.readingLog || [])) {
+    if (!e || !e.link) continue;
+    const existing = byLink.get(e.link);
+    if (!existing) {
+      byLink.set(e.link, e);
+    } else {
+      const lenNew = (e.note || "").length;
+      const lenOld = (existing.note || "").length;
+      if (lenNew > lenOld || (lenNew === lenOld && new Date(e.date) > new Date(existing.date))) {
+        byLink.set(e.link, e);
+      }
+    }
+  }
+  const readingLog = Array.from(byLink.values())
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 1000);
+
+  return { readArticles, readingLog, lastModified: Date.now() };
+}
+
+// ============================================================
+// Wrappers (mantienen API existente del codigo)
+// ============================================================
+function getReadSet() { return Storage.getReadSet(); }
+function markRead(link) {
+  const s = Storage.getReadSet();
+  s.add(link);
+  Storage.setReadSet(s);
+}
+
+function getLog() { return Storage.getLog(); }
+function setLog(arr) { Storage.setLog(arr); }
+function logRead(link, title) {
+  // Avoid duplicates from same session
+  const log = getLog();
+  if (log.some(e => e.link === link && (Date.now() - new Date(e.date).getTime()) < 86400000)) return;
+  // Look up source/bias from currently loaded items
+  const it = state.items.find(x => x.link === link);
+  log.push({
+    date: new Date().toISOString(),
+    source: it?.source || "?",
+    bias: it?.bias || "na",
+    title: title || it?.title || "",
+    link, note: ""
+  });
+  setLog(log);
+  renderBalance();
+}
+function appendLogWithNote(meta, note) {
+  const log = getLog();
+  log.push({
+    date: new Date().toISOString(),
+    source: meta.source, bias: meta.bias,
+    title: meta.title, link: meta.link, note
+  });
+  setLog(log);
+  renderBalance();
+}
+
+// ============================================================
+// Bias balance widget
+// ============================================================
+function renderBalance() {
+  const log = getLog();
+  const sevenDaysAgo = Date.now() - 7*86400000;
+  const recent = log.filter(e => new Date(e.date).getTime() > sevenDaysAgo);
+  if (!recent.length) {
+    document.getElementById("balance-bar").innerHTML = `<div style="flex:1;background:#27272a"></div>`;
+    document.getElementById("balance-legend").innerHTML = `<span class="text-zinc-500">Sin lecturas registradas. Haz click en titulares o usa 📝 nota.</span>`;
+    return;
+  }
+  const groups = { left:0, center:0, right:0, neutral:0, academic:0 };
+  recent.forEach(e => {
+    const g = CONFIG.biases[e.bias]?.group || "neutral";
+    groups[g] = (groups[g]||0) + 1;
+  });
+  const total = recent.length;
+  const order = ["left","center","right","neutral","academic"];
+  const colors = { left:"#3b82f6", center:"#9ca3af", right:"#ef4444", neutral:"#10b981", academic:"#a78bfa" };
+  const labels = { left:"Izq", center:"Centro", right:"Der", neutral:"Agencia", academic:"Académico" };
+  const bar = document.getElementById("balance-bar");
+  bar.innerHTML = order.map(g => {
+    const n = groups[g] || 0;
+    if (!n) return "";
+    return `<div style="flex:${n};background:${colors[g]}" title="${labels[g]}: ${n}"></div>`;
+  }).join("");
+  document.getElementById("balance-legend").innerHTML =
+    order.map(g => {
+      const n = groups[g] || 0;
+      if (!n) return "";
+      const pct = Math.round(n/total*100);
+      return `<span><span class="bias-chip" style="background:${colors[g]}"></span>${labels[g]} ${pct}% <span class="text-zinc-600">(${n})</span></span>`;
+    }).join("") +
+    `<span class="ml-auto text-zinc-500">${total} lecturas</span>`;
+}
+
+// ============================================================
+// Note modal
+// ============================================================
+function openNoteModal(meta) {
+  const modal = document.getElementById("note-modal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.getElementById("modal-meta").innerHTML =
+    `<div><strong>${escapeHTML(meta.title)}</strong></div>
+     <div class="mt-1">${escapeHTML(meta.source)} · ${escapeHTML(CONFIG.biases[meta.bias]?.label || meta.bias)}</div>`;
+  document.getElementById("modal-text").value = "";
+  document.getElementById("modal-text").focus();
+  document.getElementById("modal-copy").onclick = () => {
+    const note = document.getElementById("modal-text").value.trim();
+    const date = new Date().toISOString().slice(0,10);
+    const md = `## ${meta.title}\n\n- **Fuente:** ${meta.source} (${CONFIG.biases[meta.bias]?.label || meta.bias})\n- **Fecha:** ${date}\n- **Link:** ${meta.link}\n\n${note || "_(sin nota)_"}\n`;
+    navigator.clipboard.writeText(md).then(() => {
+      if (document.getElementById("modal-add-log").checked) {
+        appendLogWithNote(meta, note);
+      }
+      closeModal();
+      flashStatus("📋 Copiado. Pégalo en /notes/" + date + "-" + slug(meta.source) + ".md");
+    }).catch(() => {
+      // Fallback: download
+      const blob = new Blob([md], {type:"text/markdown"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${date}-${slug(meta.source)}.md`;
+      a.click();
+      closeModal();
+    });
+  };
+}
+function closeModal() {
+  document.getElementById("note-modal").classList.add("hidden");
+  document.getElementById("note-modal").classList.remove("flex");
+}
+document.getElementById("modal-cancel").onclick = closeModal;
+document.getElementById("note-modal").addEventListener("click", e => {
+  if (e.target.id === "note-modal") closeModal();
+});
+function slug(s) {
+  return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+}
+
+// ============================================================
+// Status flash
+// ============================================================
+let flashTimeout = null;
+function flashStatus(msg) {
+  let el = document.getElementById("flash");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "flash";
+    el.className = "fixed bottom-4 left-1/2 -translate-x-1/2 bg-zinc-100 text-zinc-900 text-xs px-3 py-2 rounded shadow-lg z-50";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = "1";
+  clearTimeout(flashTimeout);
+  flashTimeout = setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.5s"; }, 3000);
+}
+
+// ============================================================
+// View toggle
+// ============================================================
+function updateViewToggles() {
+  document.querySelectorAll(".view-toggle").forEach(b => {
+    if (b.dataset.view === state.view) {
+      b.classList.add("bg-zinc-800","text-zinc-100","border-zinc-600");
+      b.classList.remove("text-zinc-400");
+    } else {
+      b.classList.remove("bg-zinc-800","text-zinc-100","border-zinc-600");
+      b.classList.add("text-zinc-400");
+    }
+  });
+  document.getElementById("only-free").checked = state.onlyFree;
+}
+document.querySelectorAll(".view-toggle").forEach(b => {
+  b.addEventListener("click", () => {
+    state.view = b.dataset.view;
+    localStorage.setItem("view", state.view);
+    render();
+  });
+});
+document.getElementById("only-free").addEventListener("change", e => {
+  state.onlyFree = e.target.checked;
+  localStorage.setItem("onlyFree", state.onlyFree ? "1" : "0");
+  render();
+});
+
+// ============================================================
+// Export reading log
+// ============================================================
+document.getElementById("export-log").addEventListener("click", () => {
+  const log = getLog();
+  if (!log.length) { flashStatus("Reading log vacío."); return; }
+  const lines = [
+    `# Reading log — exportado ${new Date().toISOString().slice(0,16).replace("T"," ")}`,
+    "",
+    "| Fecha | Fuente | Sesgo | Título | Link | Nota |",
+    "|-------|--------|-------|--------|------|------|"
+  ];
+  log.slice().reverse().forEach(e => {
+    const date = new Date(e.date).toISOString().slice(0,10);
+    const note = (e.note||"").replace(/\|/g,"\\|").replace(/\n/g," ");
+    const title = (e.title||"").replace(/\|/g,"\\|");
+    lines.push(`| ${date} | ${e.source} | ${CONFIG.biases[e.bias]?.label||e.bias} | ${title} | ${e.link} | ${note} |`);
+  });
+  const blob = new Blob([lines.join("\n")], {type:"text/markdown"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `reading-log-${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+});
+
+// ============================================================
+// Refresh
+// ============================================================
+async function refresh() {
+  const btn = document.getElementById("refresh-btn");
+  btn.disabled = true; btn.textContent = "Cargando…";
+  document.getElementById("last-refresh").textContent = "Cargando feeds…";
+  const results = await Promise.all(CONFIG.sources.map(fetchFeed));
+  state.items = results.flatMap(r => r.items);
+  state.errors = results.filter(r => r.error || r.items.length === 0);
+  const ok = CONFIG.sources.length - state.errors.length;
+  const t = new Date().toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("last-refresh").textContent = `Actualizado ${t} · ${state.items.length} artículos · ${ok}/${CONFIG.sources.length} fuentes OK`;
+  render();
+  btn.disabled = false; btn.textContent = "Actualizar";
+}
+document.getElementById("refresh-btn").addEventListener("click", refresh);
+
+// ============================================================
+// Timer
+// ============================================================
+let timerInt = null;
+document.getElementById("start-timer").addEventListener("click", () => {
+  if (timerInt) {
+    clearInterval(timerInt); timerInt = null;
+    document.getElementById("timer").textContent = "";
+    document.getElementById("start-timer").textContent = "Iniciar 30 min";
+    return;
+  }
+  const end = Date.now() + 30*60*1000;
+  document.getElementById("start-timer").textContent = "Detener";
+  const tick = () => {
+    const left = end - Date.now();
+    if (left <= 0) {
+      clearInterval(timerInt); timerInt = null;
+      document.getElementById("timer").textContent = "⏰ ¡30 min! Cierra esto.";
+      document.getElementById("start-timer").textContent = "Iniciar 30 min";
+      return;
+    }
+    const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
+    document.getElementById("timer").textContent = `${m}:${s.toString().padStart(2,"0")}`;
+  };
+  tick(); timerInt = setInterval(tick, 1000);
+});
+
+// ============================================================
+// Service worker (PWA installable)
+// ============================================================
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(err => console.warn("SW registration failed:", err));
+  });
+}
+
+// ============================================================
+// Sync periodico (inerte si SYNC_CONFIG.enabled = false)
+// ============================================================
+if (SYNC_CONFIG.enabled && SYNC_CONFIG.endpoint && SYNC_CONFIG.token) {
+  // Pull inicial al cargar
+  Storage.sync();
+  // Pull periodico
+  setInterval(() => Storage.sync(), SYNC_CONFIG.intervalMs);
+  // Sync al volver al tab (uso en otro device mientras tanto)
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) Storage.sync();
+  });
+}
+
+// Initial
+renderBalance();
+refresh();
+</script>
+</body>
+</html>

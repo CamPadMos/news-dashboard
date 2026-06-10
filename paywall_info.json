@@ -1,0 +1,48 @@
+{
+  "_doc": "Información sobre paywalls por fuente. Tipos: 'none' (gratis siempre), 'metered' (N artículos gratis/mes), 'hard' (paga obligatoria), 'soft' (banner pero contenido accesible). free_alternatives_for indica fuentes a las que recurrir si esta fuente está paywalled (mismo evento, otra fuente).",
+  "paywalls": {
+    "Ars Technica":         {"type": "none"},
+    "Hacker News":          {"type": "none"},
+    "MIT Technology Review":{"type": "metered", "free_per_month": 3, "alternatives": ["Ars Technica", "The Verge"]},
+    "The Verge":            {"type": "none"},
+    "Anthropic":            {"type": "none"},
+    "Stratechery":          {"type": "metered", "free_per_month": 1, "notes": "Newsletter semanal gratis, daily updates pagos"},
+
+    "Reuters Business":     {"type": "none", "notes": "RSS gratis, sitio con registro"},
+    "Reuters":              {"type": "none"},
+    "Financial Times":      {"type": "metered", "free_per_month": 1, "alternatives": ["Reuters", "Bloomberg Markets", "The Economist"], "library": "Acceso gratis vía PressReader si tu librería lo ofrece"},
+    "The Economist":        {"type": "metered", "free_per_month": 1, "alternatives": ["Reuters", "Foreign Affairs"], "library": "PressReader / Libby"},
+    "Bloomberg Markets":    {"type": "metered", "free_per_month": 5, "alternatives": ["Reuters Business"]},
+    "Wall Street Journal":  {"type": "hard", "alternatives": ["Reuters Business", "Bloomberg Markets", "Axios"], "library": "Disponible vía librerías académicas (HCC vale la pena revisar)", "student": "WSJ Student: ~$4/mes"},
+
+    "El Tiempo":            {"type": "metered", "free_per_month": 10},
+    "El Espectador":        {"type": "metered", "free_per_month": 10},
+    "Semana":               {"type": "metered", "free_per_month": 5},
+    "La Silla Vacía":       {"type": "hard", "notes": "Membresía paga vale la pena para política CO seria", "alternatives": ["El Espectador", "El Tiempo"]},
+    "BBC Mundo":            {"type": "none"},
+
+    "Associated Press":     {"type": "none"},
+    "BBC News":             {"type": "none"},
+    "Al Jazeera English":   {"type": "none"},
+    "The Guardian":         {"type": "none", "notes": "Pide donación pero no bloquea"},
+    "Foreign Affairs":      {"type": "metered", "free_per_month": 1, "alternatives": ["BBC News", "Al Jazeera English"], "library": "Comúnmente disponible vía bibliotecas universitarias"},
+
+    "NPR":                  {"type": "none"},
+    "The New York Times":   {"type": "metered", "free_per_month": 5, "alternatives": ["AP", "NPR", "The Washington Post (limitado)"], "student": "NYT Student: $1/semana"},
+    "The Washington Post":  {"type": "metered", "free_per_month": 4, "alternatives": ["AP", "NPR", "Politico"]},
+    "Politico":             {"type": "none"},
+    "Axios":                {"type": "none"},
+    "The Atlantic":         {"type": "metered", "free_per_month": 5, "alternatives": ["The Guardian", "Aeon"]},
+
+    "Aeon":                 {"type": "none"},
+    "Farnam Street":        {"type": "none"},
+    "Paul Graham Essays":   {"type": "none"}
+  },
+  "library_resources": {
+    "_doc": "Servicios que dan acceso gratuito a publicaciones premium con tu carnet de biblioteca",
+    "PressReader": "https://www.pressreader.com — incluye FT, WSJ, NYT, Bloomberg, El Tiempo, Semana. Disponible en muchas bibliotecas públicas y universitarias.",
+    "Libby (OverDrive)": "https://libbyapp.com — revistas digitales (The Atlantic, The Economist, etc.) gratis con carnet de biblioteca pública",
+    "HCC Library": "Houston Community College: revisa el catálogo de bases de datos en línea — frecuentemente incluyen NYT y WSJ académicos",
+    "EBSCO / ProQuest": "Si tu universidad tiene esto, busca el periódico ahí — versión texto sin paywall"
+  }
+}

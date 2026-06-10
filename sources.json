@@ -1,0 +1,264 @@
+{
+  "categories": {
+    "tech": {
+      "name": "Tecnología, IA y software",
+      "icon": "💻",
+      "order": 1
+    },
+    "economy": {
+      "name": "Economía y finanzas",
+      "icon": "📈",
+      "order": 2
+    },
+    "colombia": {
+      "name": "Colombia y Latinoamérica",
+      "icon": "🌎",
+      "order": 3
+    },
+    "international": {
+      "name": "Internacional / Geopolítica",
+      "icon": "🌍",
+      "order": 4
+    },
+    "usa": {
+      "name": "Estados Unidos",
+      "icon": "🇺🇸",
+      "order": 5
+    },
+    "longform": {
+      "name": "Longform y desarrollo personal",
+      "icon": "📚",
+      "order": 6
+    }
+  },
+  "biases": {
+    "left": {"label": "Izquierda", "color": "#3b82f6"},
+    "center-left": {"label": "Centro-izquierda", "color": "#60a5fa"},
+    "center": {"label": "Centro", "color": "#9ca3af"},
+    "center-right": {"label": "Centro-derecha", "color": "#fb923c"},
+    "right": {"label": "Derecha", "color": "#ef4444"},
+    "neutral": {"label": "Agencia / neutral", "color": "#10b981"},
+    "academic": {"label": "Académico", "color": "#a78bfa"},
+    "community": {"label": "Comunidad", "color": "#fbbf24"},
+    "na": {"label": "N/A", "color": "#6b7280"}
+  },
+  "sources": [
+    {
+      "name": "Ars Technica",
+      "category": "tech",
+      "bias": "center",
+      "feed": "https://feeds.arstechnica.com/arstechnica/index",
+      "site": "https://arstechnica.com"
+    },
+    {
+      "name": "Hacker News",
+      "category": "tech",
+      "bias": "community",
+      "feed": "https://hnrss.org/frontpage",
+      "site": "https://news.ycombinator.com"
+    },
+    {
+      "name": "MIT Technology Review",
+      "category": "tech",
+      "bias": "academic",
+      "feed": "https://www.technologyreview.com/feed/",
+      "site": "https://www.technologyreview.com"
+    },
+    {
+      "name": "The Verge",
+      "category": "tech",
+      "bias": "center-left",
+      "feed": "https://www.theverge.com/rss/index.xml",
+      "site": "https://www.theverge.com"
+    },
+    {
+      "name": "Anthropic",
+      "category": "tech",
+      "bias": "na",
+      "feed": "https://www.anthropic.com/news/rss.xml",
+      "site": "https://www.anthropic.com/news"
+    },
+    {
+      "name": "Stratechery",
+      "category": "tech",
+      "bias": "center",
+      "feed": "https://stratechery.com/feed/",
+      "site": "https://stratechery.com"
+    },
+    {
+      "name": "Reuters Business",
+      "category": "economy",
+      "bias": "neutral",
+      "feed": "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best",
+      "site": "https://www.reuters.com/business/"
+    },
+    {
+      "name": "Financial Times",
+      "category": "economy",
+      "bias": "center",
+      "feed": "https://www.ft.com/rss/home",
+      "site": "https://www.ft.com"
+    },
+    {
+      "name": "The Economist",
+      "category": "economy",
+      "bias": "center-right",
+      "feed": "https://www.economist.com/the-world-this-week/rss.xml",
+      "site": "https://www.economist.com"
+    },
+    {
+      "name": "Bloomberg Markets",
+      "category": "economy",
+      "bias": "center",
+      "feed": "https://feeds.bloomberg.com/markets/news.rss",
+      "site": "https://www.bloomberg.com/markets"
+    },
+    {
+      "name": "Wall Street Journal",
+      "category": "economy",
+      "bias": "center-right",
+      "feed": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+      "site": "https://www.wsj.com"
+    },
+    {
+      "name": "El Tiempo",
+      "category": "colombia",
+      "bias": "center-right",
+      "feed": "https://www.eltiempo.com/rss/colombia.xml",
+      "site": "https://www.eltiempo.com"
+    },
+    {
+      "name": "El Espectador",
+      "category": "colombia",
+      "bias": "center-left",
+      "feed": "https://www.elespectador.com/arc/outboundfeeds/rss/?outputType=xml",
+      "site": "https://www.elespectador.com"
+    },
+    {
+      "name": "Semana",
+      "category": "colombia",
+      "bias": "right",
+      "feed": "https://www.semana.com/rss/",
+      "site": "https://www.semana.com"
+    },
+    {
+      "name": "La Silla Vacía",
+      "category": "colombia",
+      "bias": "center",
+      "feed": "https://www.lasillavacia.com/feed/",
+      "site": "https://www.lasillavacia.com"
+    },
+    {
+      "name": "BBC Mundo",
+      "category": "colombia",
+      "bias": "center",
+      "feed": "https://feeds.bbci.co.uk/mundo/rss.xml",
+      "site": "https://www.bbc.com/mundo"
+    },
+    {
+      "name": "Reuters",
+      "category": "international",
+      "bias": "neutral",
+      "feed": "https://www.reutersagency.com/feed/?best-topics=top-news&post_type=best",
+      "site": "https://www.reuters.com"
+    },
+    {
+      "name": "Associated Press",
+      "category": "international",
+      "bias": "neutral",
+      "feed": "https://rsshub.app/apnews/topics/apf-topnews",
+      "site": "https://apnews.com"
+    },
+    {
+      "name": "BBC News",
+      "category": "international",
+      "bias": "center",
+      "feed": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "site": "https://www.bbc.com/news"
+    },
+    {
+      "name": "Al Jazeera English",
+      "category": "international",
+      "bias": "center",
+      "feed": "https://www.aljazeera.com/xml/rss/all.xml",
+      "site": "https://www.aljazeera.com"
+    },
+    {
+      "name": "The Guardian",
+      "category": "international",
+      "bias": "left",
+      "feed": "https://www.theguardian.com/world/rss",
+      "site": "https://www.theguardian.com"
+    },
+    {
+      "name": "Foreign Affairs",
+      "category": "international",
+      "bias": "academic",
+      "feed": "https://www.foreignaffairs.com/rss.xml",
+      "site": "https://www.foreignaffairs.com"
+    },
+    {
+      "name": "NPR",
+      "category": "usa",
+      "bias": "center-left",
+      "feed": "https://feeds.npr.org/1001/rss.xml",
+      "site": "https://www.npr.org"
+    },
+    {
+      "name": "The New York Times",
+      "category": "usa",
+      "bias": "center-left",
+      "feed": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "site": "https://www.nytimes.com"
+    },
+    {
+      "name": "The Washington Post",
+      "category": "usa",
+      "bias": "center-left",
+      "feed": "https://feeds.washingtonpost.com/rss/world",
+      "site": "https://www.washingtonpost.com"
+    },
+    {
+      "name": "Politico",
+      "category": "usa",
+      "bias": "center",
+      "feed": "https://rss.politico.com/politics-news.xml",
+      "site": "https://www.politico.com"
+    },
+    {
+      "name": "Axios",
+      "category": "usa",
+      "bias": "center",
+      "feed": "https://api.axios.com/feed/",
+      "site": "https://www.axios.com"
+    },
+    {
+      "name": "The Atlantic",
+      "category": "usa",
+      "bias": "center-left",
+      "feed": "https://www.theatlantic.com/feed/all/",
+      "site": "https://www.theatlantic.com"
+    },
+    {
+      "name": "Aeon",
+      "category": "longform",
+      "bias": "academic",
+      "feed": "https://aeon.co/feed.rss",
+      "site": "https://aeon.co"
+    },
+    {
+      "name": "Farnam Street",
+      "category": "longform",
+      "bias": "na",
+      "feed": "https://fs.blog/feed/",
+      "site": "https://fs.blog"
+    },
+    {
+      "name": "Paul Graham Essays",
+      "category": "longform",
+      "bias": "na",
+      "feed": "http://www.aaronsw.com/2002/feeds/pgessays.rss",
+      "site": "http://www.paulgraham.com"
+    }
+  ]
+}
