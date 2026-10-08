@@ -2,163 +2,431 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Mi Dashboard de Noticias</title>
-  <meta name="theme-color" content="#09090b">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mis Noticias</title>
+  <meta name="description" content="Tus noticias de 31 medios, con su orientación a la vista. 30 minutos al día.">
+  <meta name="theme-color" content="#F3F5F8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12151C" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Noticias">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; padding-bottom: env(safe-area-inset-bottom); }
-    .article-title { font-family: 'Charter', Georgia, serif; line-height: 1.3; }
-    .bias-chip { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
-    .article-card { transition: all .15s ease; }
-    .article-card:hover { transform: translateY(-1px); border-color: #71717a; }
-    .read { opacity: .4; }
-    .scroll-mt { scroll-margin-top: 110px; }
-    .modal-bg { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
-    .badge { font-size: .65rem; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
-    .badge-paywall-hard    { background: #7f1d1d; color: #fecaca; }
-    .badge-paywall-metered { background: #78350f; color: #fed7aa; }
-    .badge-free            { background: #14532d; color: #bbf7d0; }
-    .cluster-card { background: linear-gradient(180deg, rgba(168,85,247,0.06), transparent); border-color: #44403c; }
-    @keyframes pulse-fade { 0%,100% { opacity: .3 } 50% { opacity: .6 } }
-    .loading { animation: pulse-fade 1.5s ease-in-out infinite; }
-    .balance-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #27272a; }
-    .balance-bar > div { transition: flex .3s ease; }
-    /* Mobile-specific tweaks */
-    @media (max-width: 640px) {
-      .article-title { font-size: 0.95rem; }
-      header h1 { font-size: 1rem; }
-      .scroll-mt { scroll-margin-top: 130px; }
+    :root {
+      color-scheme: light dark;
+      --bg: #F3F5F8;
+      --surface: #FFFFFF;
+      --surface-2: #EBEEF3;
+      --line: #DCE1E8;
+      --ink: #1B2230;
+      --muted: #5B6575;
+      --faint: #8A93A2;
+      --on-ink: #FFFFFF;
+      --free: #17703F; --free-bg: #DDF3E5;
+      --meter: #8A5A00; --meter-bg: #FBEFD3;
+      --paid: #A12626; --paid-bg: #FBE1E1;
+      --lean-left: #3B82F6; --lean-cleft: #60A5FA; --lean-center: #9CA3AF;
+      --lean-cright: #FB923C; --lean-right: #EF4444;
+      --lean-neutral: #10B981; --lean-academic: #A78BFA; --lean-community: #F2B92B; --lean-na: #8A93A2;
+      --sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      --serif: "Literata", "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
     }
-    /* Better tap targets on touch devices */
-    @media (hover: none) {
-      button, a { -webkit-tap-highlight-color: rgba(255,255,255,0.1); }
-      .article-card { padding: 0.75rem; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #12151C;
+        --surface: #1A1F29;
+        --surface-2: #232A36;
+        --line: #2C3442;
+        --ink: #E9ECF2;
+        --muted: #A3ACBA;
+        --faint: #6F7889;
+        --on-ink: #12151C;
+        --free: #8BE0AE; --free-bg: rgba(52, 199, 116, .14);
+        --meter: #F2C66B; --meter-bg: rgba(242, 185, 43, .14);
+        --paid: #F3A0A0; --paid-bg: rgba(239, 68, 68, .15);
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    html { -webkit-text-size-adjust: 100%; scroll-padding-top: 140px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      min-height: 100vh;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+    /* ---------- Header ---------- */
+    .topbar {
+      position: sticky; top: 0; z-index: 30;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .spectrum-stripe {
+      height: 4px;
+      background: linear-gradient(90deg, var(--lean-left), var(--lean-cleft) 25%, var(--lean-center) 50%, var(--lean-cright) 75%, var(--lean-right));
+    }
+    .topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 10px; }
+    .brand { min-width: 0; }
+    .brand h1 { font-family: var(--serif); font-size: 1.4rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.1; }
+    .brand p { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      height: 40px; padding: 0 14px; border-radius: 999px;
+      background: var(--surface); border: 1px solid var(--line);
+      font-size: .86rem; font-weight: 600; white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn.solid { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+    .btn.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); font-variant-numeric: tabular-nums; }
+    .btn[disabled] { opacity: .6; cursor: default; }
+    .btn .ico { display: inline-block; }
+    .is-loading .ico { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 430px) { .hide-sm { display: none; } .btn { padding: 0 12px; } }
+
+    .chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 12px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: 0 0 auto; height: 36px; padding: 0 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--surface);
+      font-size: .86rem; font-weight: 500; color: var(--muted);
+    }
+    .chip .n { color: var(--faint); margin-left: 4px; font-weight: 400; }
+    .chip.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+    .chip.on .n { color: inherit; opacity: .65; }
+
+    /* ---------- Content ---------- */
+    main { padding: 20px 0 24px; }
+    .block { margin-bottom: 34px; }
+    .block-head { margin-bottom: 12px; }
+    .block-head h2 { font-size: 1.05rem; font-weight: 700; }
+    .block-head p { font-size: .84rem; color: var(--muted); margin-top: 2px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .76rem; color: var(--muted); }
+    .src { font-weight: 700; color: var(--ink); margin-right: 2px; }
+    .lean { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); }
+    .lean i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .pay { padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .pay.free { color: var(--free); background: var(--free-bg); }
+    .pay.meter { color: var(--meter); background: var(--meter-bg); }
+    .pay.paid { color: var(--paid); background: var(--paid-bg); }
+    .time { margin-left: auto; color: var(--faint); }
+    .title { font-family: var(--serif); font-size: 1.06rem; line-height: 1.38; font-weight: 600; }
+    .title:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .foot { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); }
+    .alt { flex: 1; }
+    .note-btn { margin-left: auto; padding: 8px 10px; margin-right: -10px; margin-bottom: -8px; border-radius: 8px; font-weight: 600; color: var(--muted); font-size: .8rem; }
+    .note-btn:hover { background: var(--surface-2); color: var(--ink); }
+    .read { opacity: .55; }
+    .read .title::before { content: "✓ "; color: var(--free); }
+
+    /* ---------- Clusters: el espectro es el protagonista ---------- */
+    .cluster {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+      padding: 18px; margin-bottom: 14px;
+    }
+    .cluster-count { font-size: .82rem; font-weight: 700; color: var(--muted); }
+    .cluster-title { font-family: var(--serif); font-size: 1.3rem; line-height: 1.3; font-weight: 600; margin: 4px 0 14px; max-width: 46ch; }
+    .spectrum { margin-bottom: 16px; }
+    .spectrum-track {
+      position: relative; height: 10px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--lean-left), var(--lean-cleft) 25%, var(--lean-center) 50%, var(--lean-cright) 75%, var(--lean-right));
+      opacity: .35;
+    }
+    .spectrum-dots { position: relative; height: 22px; margin-top: -16px; }
+    .spectrum-dots span {
+      position: absolute; top: 0; width: 22px; height: 22px; border-radius: 50%;
+      transform: translateX(-50%); border: 3px solid var(--surface);
+      box-shadow: 0 0 0 1px var(--line);
+    }
+    .spectrum-ends { display: flex; justify-content: space-between; font-size: .72rem; color: var(--faint); margin-top: 4px; }
+    .spectrum-extra { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+    .c-list { list-style: none; display: grid; gap: 8px; }
+    @media (min-width: 720px) { .c-list { grid-template-columns: 1fr 1fr; } }
+    .c-item { background: var(--surface-2); border-radius: 10px; padding: 11px 13px; display: flex; flex-direction: column; gap: 6px; }
+    .c-item .title { font-size: .97rem; }
+
+    /* ---------- States ---------- */
+    .sk { height: 104px; border-radius: 12px; border: 1px solid var(--line);
+      background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%);
+      background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
+    .sk.big { height: 220px; border-radius: 18px; margin-bottom: 14px; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .loading-msg { text-align: center; color: var(--muted); font-size: .88rem; margin: 4px 0 18px; }
+    .empty { text-align: center; padding: 56px 16px; color: var(--muted); }
+    .empty h2 { font-size: 1.05rem; color: var(--ink); margin-bottom: 6px; }
+    .empty .btn { margin-top: 16px; }
+    .footnote { font-size: .8rem; color: var(--faint); text-align: center; margin-top: 8px; }
+    .linklike { text-decoration: underline; text-underline-offset: 2px; color: var(--muted); font-size: inherit; }
+
+    /* ---------- Panels (Mi semana / Ayuda) ---------- */
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+    .panel h2 { font-size: 1.05rem; font-weight: 700; }
+    .panel .sub { font-size: .85rem; color: var(--muted); margin: 2px 0 14px; }
+    .page-title { font-family: var(--serif); font-size: 1.6rem; font-weight: 600; margin: 4px 0 16px; }
+    .bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+    .bar div { min-width: 4px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: .84rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i, .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .legend small { color: var(--faint); }
+    .insight { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: .9rem; }
+    .reads { list-style: none; }
+    .reads li { padding: 11px 0; border-top: 1px solid var(--line); }
+    .reads li:first-child { border-top: 0; padding-top: 0; }
+    .reads .r-meta { font-size: .76rem; color: var(--muted); display: flex; gap: 8px; }
+    .reads a { font-family: var(--serif); font-weight: 600; font-size: .95rem; line-height: 1.35; display: block; margin-top: 2px; }
+    .reads .r-note { font-size: .84rem; color: var(--muted); margin-top: 4px; font-style: italic; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; }
+    .row + .row { border-top: 1px solid var(--line); }
+    .sub + .row { padding-top: 0; }
+    .row b { display: block; font-size: .94rem; font-weight: 600; }
+    .row small { display: block; color: var(--muted); font-size: .82rem; }
+    .switch { position: relative; width: 50px; height: 30px; flex: 0 0 auto; }
+    .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+    .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--line); transition: background .2s; pointer-events: none; }
+    .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+    .switch input:checked + span { background: var(--ink); }
+    .switch input:checked + span::after { transform: translateX(20px); }
+    .switch input:focus-visible + span { outline: 2px solid var(--ink); outline-offset: 2px; }
+    .key { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; font-size: .9rem; }
+    .key i { margin-top: 6px; }
+    .key b { font-weight: 600; }
+    .key .muted { color: var(--muted); }
+    .steps { list-style: none; counter-reset: s; }
+    .steps li { counter-increment: s; display: flex; gap: 12px; padding: 8px 0; font-size: .9rem; }
+    .steps li::before { content: counter(s); flex: 0 0 26px; height: 26px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: .8rem; }
+    .errlist { font-size: .82rem; color: var(--muted); margin-top: 8px; padding-left: 18px; }
+
+    /* ---------- Bottom tab bar ---------- */
+    .tabbar {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 40;
+      display: flex; gap: 4px; padding: 5px; border-radius: 999px;
+      background: var(--surface); border: 1px solid var(--line);
+      box-shadow: 0 10px 30px rgba(15, 20, 30, .18);
+    }
+    .tab { display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 16px; border-radius: 999px; font-size: .86rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .tab[aria-selected="true"] { background: var(--ink); color: var(--on-ink); }
+    @media (max-width: 370px) { .tab { padding: 0 11px; font-size: .8rem; } }
+
+    /* ---------- Overlays ---------- */
+    .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(10, 14, 22, .55); display: flex; align-items: flex-end; justify-content: center; }
+    @media (min-width: 640px) { .overlay { align-items: center; padding: 24px; } }
+    .sheet { width: 100%; max-width: 500px; background: var(--surface); border-radius: 22px 22px 0 0; padding: 22px 20px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 92vh; overflow: auto; }
+    @media (min-width: 640px) { .sheet { border-radius: 22px; } }
+    .sheet h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .sheet .sub { font-size: .86rem; color: var(--muted); margin-bottom: 14px; }
+    .sheet textarea {
+      width: 100%; min-height: 110px; resize: vertical; font: inherit; font-size: 1rem;
+      color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    }
+    .sheet textarea:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+    .check { display: flex; align-items: center; gap: 8px; font-size: .86rem; color: var(--muted); margin: 12px 0 16px; }
+    .check input { width: 18px; height: 18px; accent-color: var(--ink); }
+    .sheet-actions { display: flex; gap: 10px; }
+    .sheet-actions .btn { flex: 1; height: 46px; }
+    .tour { text-align: center; padding-top: 30px; }
+    .tour-art { font-size: 3.2rem; line-height: 1; margin-bottom: 16px; }
+    .tour h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+    .tour p { color: var(--muted); font-size: .97rem; max-width: 34ch; margin: 0 auto; }
+    .tour .legend { justify-content: center; margin-top: 16px; }
+    .tour-dots { display: flex; justify-content: center; gap: 6px; margin: 24px 0 18px; }
+    .tour-dots i { width: 8px; height: 8px; border-radius: 999px; background: var(--line); transition: width .2s; }
+    .tour-dots i.on { width: 22px; background: var(--ink); }
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 70;
+      background: var(--ink); color: var(--on-ink); font-size: .86rem; font-weight: 500;
+      padding: 10px 16px; border-radius: 12px; max-width: calc(100vw - 32px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); transition: opacity .3s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sk, .is-loading .ico { animation: none; }
+      * { transition: none !important; }
     }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+<body>
 
-  <!-- ============= HEADER ============= -->
-  <header class="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
-      <div class="min-w-0 flex-shrink">
-        <h1 class="text-base sm:text-lg font-semibold tracking-tight truncate">Mi Dashboard</h1>
-        <p class="text-[10px] sm:text-xs text-zinc-500 truncate" id="last-refresh">Sin actualizar</p>
-      </div>
-      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-        <span id="timer" class="text-[11px] sm:text-xs text-zinc-500 font-mono"></span>
-        <button id="start-timer" class="text-[11px] sm:text-xs px-2 py-1 rounded border border-zinc-700 hover:bg-zinc-800 active:bg-zinc-800 whitespace-nowrap">⏱ 30m</button>
-        <button id="refresh-btn" class="text-[11px] sm:text-xs px-2 sm:px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 border border-zinc-700">↻</button>
-      </div>
-    </div>
-    <nav class="max-w-6xl mx-auto px-4 pb-2 flex gap-3 overflow-x-auto text-xs text-zinc-400">
-      <a href="#clusters" class="hover:text-zinc-100 whitespace-nowrap">🔥 Clusters</a>
-      <a href="#tech" class="hover:text-zinc-100 whitespace-nowrap">💻 Tech</a>
-      <a href="#economy" class="hover:text-zinc-100 whitespace-nowrap">📈 Economía</a>
-      <a href="#colombia" class="hover:text-zinc-100 whitespace-nowrap">🌎 Colombia</a>
-      <a href="#international" class="hover:text-zinc-100 whitespace-nowrap">🌍 Internacional</a>
-      <a href="#usa" class="hover:text-zinc-100 whitespace-nowrap">🇺🇸 EE.UU.</a>
-      <a href="#longform" class="hover:text-zinc-100 whitespace-nowrap">📚 Longform</a>
-    </nav>
-  </header>
-
-  <!-- ============= BALANCE + CONTROLS ============= -->
-  <section class="max-w-6xl mx-auto px-4 py-4 border-b border-zinc-900 space-y-3">
-    <div class="flex items-baseline justify-between">
-      <h2 class="text-xs uppercase tracking-wider text-zinc-400">Balance de sesgo · últimos 7 días</h2>
-      <button id="export-log" class="text-xs text-zinc-500 hover:text-zinc-200 underline">Exportar reading-log</button>
-    </div>
-    <div id="balance" class="space-y-2">
-      <div class="balance-bar" id="balance-bar"></div>
-      <div id="balance-legend" class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400"></div>
-    </div>
-    <div class="flex flex-wrap items-center gap-3 pt-1 text-xs">
-      <span class="text-zinc-500">Vista:</span>
-      <button data-view="clusters" class="view-toggle px-2 py-1 rounded border border-zinc-700">Clusters + categorías</button>
-      <button data-view="source" class="view-toggle px-2 py-1 rounded border border-zinc-700">Por fuente</button>
-      <label class="ml-auto text-zinc-400 flex items-center gap-1 cursor-pointer">
-        <input type="checkbox" id="only-free" class="accent-emerald-500"> solo fuentes 100% gratis
-      </label>
-    </div>
-  </section>
-
-  <!-- ============= MAIN ============= -->
-  <main id="content" class="max-w-6xl mx-auto px-4 py-6 space-y-10">
-    <div id="loading-state" class="text-center py-20 text-zinc-500">
-      <div class="loading">Cargando feeds…</div>
-      <div class="text-xs mt-2">Esto puede tomar 20-40 segundos la primera vez.</div>
-    </div>
-  </main>
-
-  <footer class="max-w-6xl mx-auto px-4 py-8 text-xs text-zinc-600 text-center">
-    Sistema personal · 30 min al día · Una idea entendida vale más que 50 titulares escaneados.
-  </footer>
-
-  <!-- ============= NOTE MODAL ============= -->
-  <div id="note-modal" class="fixed inset-0 hidden modal-bg z-50 items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-700 rounded-lg max-w-lg w-full p-5 space-y-3">
-      <h3 class="text-sm font-semibold">Nota rápida</h3>
-      <div id="modal-meta" class="text-xs text-zinc-400"></div>
-      <textarea id="modal-text" rows="4" placeholder="1-3 frases sobre por qué este artículo te importa o qué aprendiste..." class="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-sm resize-none focus:outline-none focus:border-zinc-500"></textarea>
-      <div class="flex justify-between items-center text-xs">
-        <label class="text-zinc-400 flex items-center gap-1 cursor-pointer">
-          <input type="checkbox" id="modal-add-log" checked> agregar al reading-log
-        </label>
-        <div class="flex gap-2">
-          <button id="modal-cancel" class="px-3 py-1 rounded border border-zinc-700 hover:bg-zinc-800">Cancelar</button>
-          <button id="modal-copy" class="px-3 py-1 rounded bg-zinc-100 text-zinc-900 hover:bg-white">Copiar</button>
+  <header class="topbar">
+    <div class="spectrum-stripe" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="topbar-row">
+        <div class="brand">
+          <h1>Mis Noticias</h1>
+          <p id="status">Buscando noticias…</p>
+        </div>
+        <div class="actions">
+          <button id="timer-btn" class="btn" aria-label="Iniciar temporizador de 30 minutos">⏱ <span id="timer-label">30 min</span></button>
+          <button id="refresh-btn" class="btn" aria-label="Actualizar noticias"><span class="ico">↻</span><span class="hide-sm">Actualizar</span></button>
         </div>
       </div>
-      <p class="text-xs text-zinc-500">El texto se copia al portapapeles formateado en markdown. Pégalo en tu carpeta /notes.</p>
+      <nav id="chips" class="chips" aria-label="Temas"></nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Noticias -->
+    <section id="view-news" aria-live="polite"></section>
+
+    <!-- Mi semana -->
+    <section id="view-week" hidden>
+      <h1 class="page-title">Mi semana</h1>
+      <div class="panel" id="balance-panel"></div>
+      <div class="panel">
+        <h2>Lo último que leíste</h2>
+        <p class="sub">Se guarda solo en este dispositivo.</p>
+        <ul class="reads" id="reads"></ul>
+      </div>
+      <div class="panel">
+        <h2>Ajustes</h2>
+        <p class="sub">Cámbialos cuando quieras.</p>
+        <label class="row">
+          <span><b>Agrupar historias repetidas</b><small>Junta los artículos que cuentan lo mismo.</small></span>
+          <span class="switch"><input type="checkbox" id="opt-group"><span></span></span>
+        </label>
+        <label class="row">
+          <span><b>Ocultar medios de pago</b><small>Muestra solo medios gratis o con 5+ artículos gratis al mes.</small></span>
+          <span class="switch"><input type="checkbox" id="opt-free"><span></span></span>
+        </label>
+        <div class="row">
+          <span><b>Descargar mis lecturas</b><small>Un archivo .md con todo lo que leíste y tus notas.</small></span>
+          <button class="btn" id="export-btn">Descargar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ayuda -->
+    <section id="view-help" hidden>
+      <h1 class="page-title">Cómo funciona</h1>
+      <div class="panel">
+        <h2>En tres pasos</h2>
+        <ol class="steps" style="margin-top:10px">
+          <li><span>Toca un titular para leerlo. Se abre la página del medio y queda marcado como leído.</span></li>
+          <li><span>Si algo vale la pena recordar, toca <b>Guardar nota</b> y escribe una o dos frases.</span></li>
+          <li><span>Revisa <b>Mi semana</b> para ver si estás leyendo de todos los lados.</span></li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h2>Qué significan los colores</h2>
+        <p class="sub">Cada medio tiene una orientación. Ninguna es mejor; leer varias te da el cuadro completo.</p>
+        <div id="help-legend"></div>
+      </div>
+      <div class="panel">
+        <h2>Etiquetas de precio</h2>
+        <div class="key"><span class="pay free">Gratis</span><span class="muted">Puedes leer todo sin pagar.</span></div>
+        <div class="key"><span class="pay meter">5 gratis/mes</span><span class="muted">Te deja leer algunos artículos al mes; después pide suscripción.</span></div>
+        <div class="key"><span class="pay paid">De pago</span><span class="muted">Necesitas suscripción. Te sugerimos un medio gratis con la misma noticia.</span></div>
+      </div>
+      <div class="panel">
+        <h2>Tu rutina sugerida</h2>
+        <div class="key"><span>☀️</span><span><b>Mañana, 10 min.</b> <span class="muted">Mira las historias agrupadas y compara cómo las cuenta cada medio.</span></span></div>
+        <div class="key"><span>🌙</span><span><b>Tarde, 15 min.</b> <span class="muted">Lee un artículo a fondo de un tema que te interese.</span></span></div>
+        <div class="key"><span>⏱</span><span><b>Cuando suene el temporizador, cierras.</b> <span class="muted">Una idea entendida vale más que 50 titulares.</span></span></div>
+        <div style="margin-top:12px"><button class="btn" id="tour-again">Ver la bienvenida otra vez</button></div>
+      </div>
+      <div class="panel" id="errors-panel" hidden>
+        <h2>Medios que no respondieron</h2>
+        <p class="sub">Es normal que algunos fallen de vez en cuando. Toca Actualizar más tarde.</p>
+        <ul class="errlist" id="errlist"></ul>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="Secciones">
+    <button class="tab" role="tab" data-tab="news" aria-selected="true">📰 Noticias</button>
+    <button class="tab" role="tab" data-tab="week" aria-selected="false">📊 Mi semana</button>
+    <button class="tab" role="tab" data-tab="help" aria-selected="false">❓ Ayuda</button>
+  </nav>
+
+  <!-- Nota -->
+  <div class="overlay" id="note-overlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="note-h">
+      <h2 id="note-h">Guardar nota</h2>
+      <p class="sub" id="note-meta"></p>
+      <textarea id="note-text" placeholder="¿Qué aprendiste o por qué te importa? Una o dos frases bastan."></textarea>
+      <label class="check"><input type="checkbox" id="note-log" checked> Agregar a Mi semana</label>
+      <div class="sheet-actions">
+        <button class="btn" id="note-cancel">Cancelar</button>
+        <button class="btn solid" id="note-save">Guardar y copiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bienvenida -->
+  <div class="overlay" id="tour-overlay" hidden>
+    <div class="sheet tour" role="dialog" aria-modal="true" aria-labelledby="tour-h">
+      <div id="tour-body"></div>
+      <div class="tour-dots" id="tour-dots"></div>
+      <div class="sheet-actions">
+        <button class="btn" id="tour-skip">Saltar</button>
+        <button class="btn solid" id="tour-next">Siguiente</button>
+      </div>
     </div>
   </div>
 
 <script>
 // ============================================================
-// CONFIG — fuentes, sesgos y paywalls
+// CONFIG — fuentes, orientación y paywalls
 // ============================================================
 const CONFIG = {
   categories: {
-    tech:          { name: "Tecnología, IA y software", icon: "💻", order: 1 },
-    economy:       { name: "Economía y finanzas",        icon: "📈", order: 2 },
-    colombia:      { name: "Colombia y Latinoamérica",   icon: "🌎", order: 3 },
-    international: { name: "Internacional / Geopolítica",icon: "🌍", order: 4 },
-    usa:           { name: "Estados Unidos",             icon: "🇺🇸", order: 5 },
-    longform:      { name: "Longform y desarrollo personal", icon: "📚", order: 6 }
+    tech:          { name: "Tecnología, IA y software",      short: "Tecnología",      icon: "💻", order: 1 },
+    economy:       { name: "Economía y finanzas",            short: "Economía",        icon: "📈", order: 2 },
+    colombia:      { name: "Colombia y Latinoamérica",       short: "Colombia y LatAm",icon: "🌎", order: 3 },
+    international: { name: "Internacional",                  short: "Mundo",           icon: "🌍", order: 4 },
+    usa:           { name: "Estados Unidos",                 short: "EE.UU.",          icon: "🇺🇸", order: 5 },
+    longform:      { name: "Para leer con calma",            short: "Para leer con calma", icon: "📚", order: 6 }
   },
   biases: {
-    "left":         { label: "Izquierda",      color: "#3b82f6", group: "left" },
-    "center-left":  { label: "Centro-izq",     color: "#60a5fa", group: "left" },
-    "center":       { label: "Centro",         color: "#9ca3af", group: "center" },
-    "center-right": { label: "Centro-der",     color: "#fb923c", group: "right" },
-    "right":        { label: "Derecha",        color: "#ef4444", group: "right" },
-    "neutral":      { label: "Agencia",        color: "#10b981", group: "neutral" },
-    "academic":     { label: "Académico",      color: "#a78bfa", group: "academic" },
-    "community":    { label: "Comunidad",      color: "#fbbf24", group: "neutral" },
-    "na":           { label: "—",              color: "#6b7280", group: "neutral" }
+    "left":         { label: "Izquierda",   color: "var(--lean-left)",      group: "left",     pos: 0 },
+    "center-left":  { label: "Centro-izq.", color: "var(--lean-cleft)",     group: "left",     pos: 25 },
+    "center":       { label: "Centro",      color: "var(--lean-center)",    group: "center",   pos: 50 },
+    "center-right": { label: "Centro-der.", color: "var(--lean-cright)",    group: "right",    pos: 75 },
+    "right":        { label: "Derecha",     color: "var(--lean-right)",     group: "right",    pos: 100 },
+    "neutral":      { label: "Agencia",     color: "var(--lean-neutral)",   group: "neutral" },
+    "academic":     { label: "Académico",   color: "var(--lean-academic)",  group: "academic" },
+    "community":    { label: "Comunidad",   color: "var(--lean-community)", group: "neutral" },
+    "na":           { label: "Otro",        color: "var(--lean-na)",        group: "neutral" }
   },
-  // type: none | metered | hard
   paywalls: {
     "MIT Technology Review":{ type:"metered", free_per_month:3 },
     "Stratechery":          { type:"metered", free_per_month:1 },
-    "Financial Times":      { type:"metered", free_per_month:1, alternatives:["Reuters","Bloomberg Markets","The Economist"] },
+    "Financial Times":      { type:"metered", free_per_month:1, alternatives:["Reuters","Bloomberg Markets"] },
     "The Economist":        { type:"metered", free_per_month:1, alternatives:["Reuters","Foreign Affairs"] },
     "Bloomberg Markets":    { type:"metered", free_per_month:5, alternatives:["Reuters Business"] },
-    "Wall Street Journal":  { type:"hard",    alternatives:["Reuters Business","Bloomberg Markets","Axios"] },
+    "Wall Street Journal":  { type:"hard",    alternatives:["Reuters Business","Axios"] },
     "El Tiempo":            { type:"metered", free_per_month:10 },
     "El Espectador":        { type:"metered", free_per_month:10 },
     "Semana":               { type:"metered", free_per_month:5 },
     "La Silla Vacía":       { type:"hard",    alternatives:["El Espectador","El Tiempo"] },
     "Foreign Affairs":      { type:"metered", free_per_month:1, alternatives:["BBC News","Al Jazeera English"] },
-    "The New York Times":   { type:"metered", free_per_month:5, alternatives:["Associated Press","NPR","The Washington Post"] },
-    "The Washington Post":  { type:"metered", free_per_month:4, alternatives:["Associated Press","NPR","Politico"] },
+    "The New York Times":   { type:"metered", free_per_month:5, alternatives:["Associated Press","NPR"] },
+    "The Washington Post":  { type:"metered", free_per_month:4, alternatives:["Associated Press","Politico"] },
     "The Atlantic":         { type:"metered", free_per_month:5, alternatives:["The Guardian","Aeon"] }
   },
   sources: [
@@ -196,89 +464,118 @@ const CONFIG = {
   ]
 };
 
+// Grupos para el balance semanal
+const GROUPS = {
+  left:     { label: "Izquierda", color: "var(--lean-left)",     desc: "Medios con mirada progresista." },
+  center:   { label: "Centro",    color: "var(--lean-center)",   desc: "Buscan un tono equilibrado." },
+  right:    { label: "Derecha",   color: "var(--lean-right)",    desc: "Medios con mirada conservadora." },
+  neutral:  { label: "Neutral",   color: "var(--lean-neutral)",  desc: "Agencias de noticias y otras fuentes con poca opinión." },
+  academic: { label: "Académico", color: "var(--lean-academic)", desc: "Revistas de análisis y ensayos largos." }
+};
+const GROUP_ORDER = ["left", "center", "right", "neutral", "academic"];
+
 // ============================================================
-// State
+// Utilidades
 // ============================================================
-let state = {
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const prefs = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+// Solo permite enlaces http/https (bloquea javascript: y similares que vengan en un feed)
+function safeUrl(u) {
+  try { const x = new URL(String(u).trim()); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : "#"; }
+  catch { return "#"; }
+}
+function timeAgo(d) {
+  if (!d) return "";
+  const s = Math.floor((Date.now() - d) / 1000);
+  if (s < 60) return "ahora";
+  if (s < 3600) return "hace " + Math.floor(s / 60) + " min";
+  if (s < 86400) return "hace " + Math.floor(s / 3600) + " h";
+  const days = Math.floor(s / 86400);
+  return days === 1 ? "ayer" : "hace " + days + " días";
+}
+function biasOf(b) { return CONFIG.biases[b] || CONFIG.biases.na; }
+function groupOf(b) { return biasOf(b).group; }
+function payInfo(name) {
+  const p = CONFIG.paywalls[name];
+  if (!p || p.type === "none") return { cls: "free", label: "Gratis" };
+  if (p.type === "hard") return { cls: "paid", label: "De pago" };
+  return { cls: "meter", label: (p.free_per_month || "?") + " gratis/mes" };
+}
+function isFreeEnough(name) {
+  const p = CONFIG.paywalls[name];
+  return !p || p.type === "none" || (p.type === "metered" && (p.free_per_month || 0) >= 5);
+}
+function slug(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+}
+
+// ============================================================
+// Estado
+// ============================================================
+const state = {
   items: [],
   errors: [],
-  view: (typeof localStorage !== "undefined" ? localStorage.getItem("view") : null) || "clusters",
-  onlyFree: (typeof localStorage !== "undefined" ? localStorage.getItem("onlyFree") : null) === "1"
+  loading: true,
+  cat: "all",
+  tab: "news",
+  groupStories: prefs.get("view", "clusters") === "clusters",
+  onlyFree: prefs.get("onlyFree", "0") === "1"
 };
 
 // ============================================================
-// RSS fetching via AllOrigins CORS proxy
+// Descarga de feeds (proxy CORS público)
 // ============================================================
 const PROXY = "https://api.allorigins.win/raw?url=";
 async function fetchFeed(source) {
   try {
-    const url = PROXY + encodeURIComponent(source.feed);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 15000);
-    const res = await fetch(url, { signal: ctrl.signal });
+    const res = await fetch(PROXY + encodeURIComponent(source.feed), { signal: ctrl.signal });
     clearTimeout(t);
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const xml = await res.text();
-    return { source, items: parseRSS(xml, source) };
+    return { source, items: parseRSS(await res.text(), source) };
   } catch (e) {
-    return { source, items: [], error: e.message };
+    return { source, items: [], error: e.name === "AbortError" ? "tardó demasiado" : e.message };
   }
 }
 function parseRSS(xml, source) {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   const rss = Array.from(doc.querySelectorAll("item")).slice(0, 5);
-  if (rss.length) return rss.map(it => mkItem(it, source, "rss"));
+  if (rss.length) return rss.map(it => mkItem(it, source, "rss")).filter(i => i.title);
   const atom = Array.from(doc.querySelectorAll("entry")).slice(0, 5);
-  return atom.map(it => mkItem(it, source, "atom"));
+  return atom.map(it => mkItem(it, source, "atom")).filter(i => i.title);
 }
 function mkItem(el, source, kind) {
   const title = (el.querySelector("title")?.textContent || "").trim();
-  const link = kind === "atom"
-    ? (el.querySelector("link")?.getAttribute("href") || "")
-    : (el.querySelector("link")?.textContent || el.querySelector("guid")?.textContent || "");
-  const dateStr = (el.querySelector("pubDate")?.textContent
-                  || el.querySelector("updated")?.textContent
-                  || el.querySelector("published")?.textContent || "");
+  let link = "";
+  if (kind === "atom") {
+    const alt = el.querySelector('link[rel="alternate"]') || el.querySelector("link");
+    link = alt?.getAttribute("href") || "";
+  } else {
+    link = (el.querySelector("link")?.textContent || el.querySelector("guid")?.textContent || "").trim();
+  }
+  const dateStr = el.querySelector("pubDate")?.textContent || el.querySelector("updated")?.textContent || el.querySelector("published")?.textContent || "";
   const d = dateStr ? new Date(dateStr) : null;
-  return {
-    title, link,
-    pubDate: d && !isNaN(d) ? d : null,
-    source: source.name, bias: source.bias, category: source.category
-  };
+  return { title, link, pubDate: d && !isNaN(d) ? d : null, source: source.name, bias: source.bias, category: source.category };
 }
 
 // ============================================================
-// Time helper
+// Agrupación de historias (Jaccard sobre palabras del titular)
 // ============================================================
-function timeAgo(d) {
-  if (!d) return "";
-  const s = Math.floor((Date.now() - d) / 1000);
-  if (s < 60) return "ahora";
-  if (s < 3600) return Math.floor(s/60) + "m";
-  if (s < 86400) return Math.floor(s/3600) + "h";
-  return Math.floor(s/86400) + "d";
-}
-function escapeHTML(s) {
-  return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-// ============================================================
-// Clustering (keyword Jaccard, language-aware)
-// ============================================================
-const STOPWORDS = new Set([
-  // English
-  "the","a","an","and","or","but","of","to","for","in","on","at","by","with","from","as","is","are","was","were","be","been","being","this","that","these","those","it","its","has","have","had","will","would","could","should","may","might","can","says","said","new","reports","report","year","years","day","days","top","over","after","before","amid","into","about","more","than","first","second","last","one","two","three","not","no","up","down","off","out","why","what","how","when","where","who","which","just","also","still","really","very","most","many","some","such","like","near","under","while","because","since","through","across","against","without","via","among","between","along","around","upon","next","past","high","low","big","small","good","bad","old","young"
-  ,"news","story","update","video","photos","photo","watch","live","breaking","week","weeks","ago","yesterday","today","tomorrow","exclusive","analysis","editorial","opinion","comment"
-  // Spanish
-  ,"el","la","los","las","de","del","y","o","pero","con","sin","por","para","que","es","son","fue","fueron","ser","estar","esta","estas","ese","esa","esos","esas","este","estos","un","una","unos","unas","su","sus","al","lo","ya","no","sí","si","más","menos","muy","mucho","mucha","muchos","muchas","tras","entre","sobre","bajo","desde","hasta","cuando","donde","como","porque","cómo","qué","quién","cuál","aún","aun","tan","todo","toda","todos","todas","cada","otro","otra","otros","otras","mismo","misma","mismos","mismas","ante","tras","contra","hacia","durante","mediante","según","segun","ahora","hoy","ayer","mañana","sólo","solo"
-]);
+const STOPWORDS = new Set(("the a an and or but of to for in on at by with from as is are was were be been being this that these those it its has have had will would could should may might can says said new reports report year years day days top over after before amid into about more than first second last one two three not no up down off out why what how when where who which just also still really very most many some such like near under while because since through across against without via among between along around upon next past high low big small good bad old young news story update video photos photo watch live breaking week weeks ago yesterday today tomorrow exclusive analysis editorial opinion comment " +
+  "el la los las de del y o pero con sin por para que es son fue fueron ser estar esta estas ese esa esos esas este estos un una unos unas su sus al lo ya no si mas menos muy mucho mucha muchos muchas tras entre sobre bajo desde hasta cuando donde como porque quien cual aun tan todo toda todos todas cada otro otra otros otras mismo misma mismos mismas ante contra hacia durante mediante segun ahora hoy ayer manana solo").split(" "));
 function tokenize(text) {
   if (!text) return [];
-  return text
-    .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "") // strip accents
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/)
     .filter(w => w.length >= 4 && !STOPWORDS.has(w));
 }
 function jaccard(a, b) {
@@ -287,224 +584,250 @@ function jaccard(a, b) {
   for (const x of a) if (b.has(x)) inter++;
   return inter / (a.size + b.size - inter);
 }
-function clusterItems(items, threshold = 0.34, minSize = 2) {
+function clusterItems(items, threshold = 0.34) {
   const tokens = items.map(it => new Set(tokenize(it.title)));
   const n = items.length;
-  // Union-find
-  const parent = Array.from({length:n}, (_,i)=>i);
-  const find = i => parent[i]===i ? i : (parent[i] = find(parent[i]));
-  const union = (a,b) => { const ra=find(a), rb=find(b); if (ra!==rb) parent[ra]=rb; };
-  for (let i = 0; i < n; i++) {
-    for (let j = i+1; j < n; j++) {
-      if (jaccard(tokens[i], tokens[j]) >= threshold) union(i, j);
-    }
-  }
+  const parent = Array.from({ length: n }, (_, i) => i);
+  const find = i => parent[i] === i ? i : (parent[i] = find(parent[i]));
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++)
+      if (jaccard(tokens[i], tokens[j]) >= threshold) { const ri = find(i), rj = find(j); if (ri !== rj) parent[ri] = rj; }
   const groups = {};
-  for (let i = 0; i < n; i++) {
-    const r = find(i);
-    (groups[r] = groups[r] || []).push(items[i]);
-  }
-  const clusters = [];
-  const singletons = [];
+  for (let i = 0; i < n; i++) (groups[find(i)] = groups[find(i)] || []).push(items[i]);
+  const clusters = [], singletons = [];
   Object.values(groups).forEach(g => {
-    // Only treat as cluster if it spans >=2 distinct sources
-    const distinctSources = new Set(g.map(x => x.source));
-    if (g.length >= minSize && distinctSources.size >= 2) clusters.push(g);
+    if (g.length >= 2 && new Set(g.map(x => x.source)).size >= 2) clusters.push(g);
     else singletons.push(...g);
   });
-  // Sort clusters: more sources first, then more items
-  clusters.sort((a,b) => {
-    const sa = new Set(a.map(x=>x.source)).size;
-    const sb = new Set(b.map(x=>x.source)).size;
-    return sb - sa || b.length - a.length;
-  });
+  clusters.sort((a, b) => new Set(b.map(x => x.source)).size - new Set(a.map(x => x.source)).size || b.length - a.length);
   return { clusters, singletons };
 }
 
 // ============================================================
 // Render
 // ============================================================
-function paywallBadge(sourceName) {
-  const p = CONFIG.paywalls[sourceName];
-  if (!p) return `<span class="badge badge-free">gratis</span>`;
-  if (p.type === "hard") return `<span class="badge badge-paywall-hard" title="Paywall duro">paga</span>`;
-  if (p.type === "metered") return `<span class="badge badge-paywall-metered" title="${p.free_per_month||"?"} gratis/mes">${p.free_per_month||"?"}/mes</span>`;
-  return `<span class="badge badge-free">gratis</span>`;
+const byDate = (a, b) => (b.pubDate?.getTime() || 0) - (a.pubDate?.getTime() || 0);
+function visibleItems() {
+  return state.onlyFree ? state.items.filter(i => isFreeEnough(i.source)) : state.items;
 }
-function alternativesHint(sourceName) {
-  const p = CONFIG.paywalls[sourceName];
-  if (!p || !p.alternatives) return "";
-  return `<div class="text-xs text-zinc-500 mt-1">Alternativa gratis: ${p.alternatives.slice(0,2).join(" · ")}</div>`;
+function orderedCats() {
+  return Object.entries(CONFIG.categories).sort((a, b) => a[1].order - b[1].order);
 }
-function articleCard(it, opts={}) {
-  const readSet = getReadSet();
-  const isRead = readSet.has(it.link);
-  const biasInfo = CONFIG.biases[it.bias] || CONFIG.biases.na;
-  return `
-    <div class="article-card block p-3 rounded border border-zinc-800 bg-zinc-900/30 ${isRead ? "read" : ""}">
-      <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
-        <span><span class="bias-chip" style="background:${biasInfo.color}"></span>${escapeHTML(it.source)} ${paywallBadge(it.source)}</span>
-        <span>${timeAgo(it.pubDate)}</span>
-      </div>
-      <a href="${escapeHTML(it.link)}" target="_blank" rel="noopener noreferrer"
-         class="article-title block text-zinc-100"
-         data-link="${escapeHTML(it.link)}">${escapeHTML(it.title)}</a>
-      ${opts.showAlts !== false ? alternativesHint(it.source) : ""}
-      <div class="flex items-center gap-3 mt-2 text-xs text-zinc-500">
-        <button class="hover:text-zinc-200 note-btn"
-                data-title="${escapeHTML(it.title)}"
-                data-link="${escapeHTML(it.link)}"
-                data-source="${escapeHTML(it.source)}"
-                data-bias="${escapeHTML(it.bias)}">📝 nota</button>
-      </div>
-    </div>`;
+
+function srcTag(it) {
+  const b = biasOf(it.bias), p = payInfo(it.source);
+  return `<span class="src">${esc(it.source)}</span>
+    <span class="lean"><i style="background:${b.color}"></i>${b.label}</span>
+    <span class="pay ${p.cls}">${p.label}</span>`;
+}
+function link(it, extra = "") {
+  return `<a class="title" href="${esc(safeUrl(it.link))}" target="_blank" rel="noopener noreferrer" data-link="${esc(it.link)}"${extra}>${esc(it.title)}</a>`;
+}
+function noteBtn(it) {
+  return `<button class="note-btn" data-note="${esc(it.link)}">✎ Guardar nota</button>`;
+}
+function altHint(name) {
+  const p = CONFIG.paywalls[name];
+  if (!p || !p.alternatives || p.type === "none") return "";
+  return `<span class="alt">Gratis en ${esc(p.alternatives[0])}</span>`;
+}
+function card(it, read) {
+  return `<article class="card ${read.has(it.link) ? "read" : ""}">
+    <div class="meta">${srcTag(it)}<span class="time">${timeAgo(it.pubDate)}</span></div>
+    ${link(it)}
+    <div class="foot">${altHint(it.source)}${noteBtn(it)}</div>
+  </article>`;
+}
+function spectrum(g) {
+  const seen = new Map();
+  const extras = [];
+  g.forEach(it => {
+    const b = biasOf(it.bias);
+    if (typeof b.pos === "number") {
+      if (!seen.has(it.source)) seen.set(it.source, b);
+    } else if (!extras.includes(it.source)) extras.push(it.source);
+  });
+  const posCount = {};
+  const dots = [...seen.entries()].map(([name, b]) => {
+    const k = b.pos; posCount[k] = (posCount[k] || 0) + 1;
+    const shift = (posCount[k] - 1) * 14;          // desplaza si dos medios caen en el mismo punto
+    const left = `calc(${Math.min(Math.max(b.pos, 4), 96)}% + ${shift}px)`;
+    return `<span style="left:${left};background:${b.color}" title="${esc(name)}: ${b.label}"></span>`;
+  }).join("");
+  const extra = extras.length ? `<p class="spectrum-extra">También la cubre: ${extras.map(esc).join(", ")}</p>` : "";
+  if (!seen.size) return extra ? `<div class="spectrum">${extra}</div>` : "";
+  return `<div class="spectrum" aria-label="Orientación de los medios que cubren esta historia">
+    <div class="spectrum-track"></div>
+    <div class="spectrum-dots">${dots}</div>
+    <div class="spectrum-ends"><span>Izquierda</span><span>Centro</span><span>Derecha</span></div>
+    ${extra}
+  </div>`;
+}
+function clusterCard(g, read) {
+  const n = new Set(g.map(x => x.source)).size;
+  const head = g.slice().sort((a, b) => b.title.length - a.title.length)[0];
+  return `<article class="cluster">
+    <div class="cluster-count">${n} medios cuentan esta historia</div>
+    <h3 class="cluster-title">${esc(head.title)}</h3>
+    ${spectrum(g)}
+    <ul class="c-list">${g.map(it => `<li class="c-item ${read.has(it.link) ? "read" : ""}">
+      <div class="meta">${srcTag(it)}<span class="time">${timeAgo(it.pubDate)}</span></div>
+      ${link(it)}
+      <div class="foot">${noteBtn(it)}</div>
+    </li>`).join("")}</ul>
+  </article>`;
+}
+
+function renderChips() {
+  const nav = $("#chips");
+  nav.hidden = state.tab !== "news";
+  const items = visibleItems();
+  const counts = {};
+  items.forEach(i => counts[i.category] = (counts[i.category] || 0) + 1);
+  const list = [{ id: "all", label: "Todo", n: items.length }]
+    .concat(orderedCats().map(([id, c]) => ({ id, label: `${c.icon} ${c.short}`, n: counts[id] || 0 })));
+  nav.innerHTML = list.map(c =>
+    `<button class="chip ${state.cat === c.id ? "on" : ""}" data-cat="${c.id}" aria-pressed="${state.cat === c.id}">${c.label}${state.loading && !state.items.length ? "" : `<span class="n">${c.n}</span>`}</button>`
+  ).join("");
+}
+
+function renderNews() {
+  const el = $("#view-news");
+  if (state.loading && !state.items.length) {
+    el.innerHTML = `<p class="loading-msg">Reuniendo noticias de ${CONFIG.sources.length} medios. La primera vez tarda unos 30 segundos.</p>
+      <div class="sk big"></div><div class="grid">${'<div class="sk"></div>'.repeat(6)}</div>`;
+    return;
+  }
+  let items = visibleItems();
+  if (state.cat !== "all") items = items.filter(i => i.category === state.cat);
+  if (!state.items.length) {
+    el.innerHTML = `<div class="empty"><h2>No pudimos traer noticias</h2>
+      <p>Revisa tu conexión a internet y vuelve a intentarlo.</p>
+      <button class="btn solid" data-action="refresh">Actualizar ahora</button></div>`;
+    return;
+  }
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><h2>Nada en este tema por ahora</h2>
+      <p>${state.onlyFree ? "Tienes activado “Ocultar medios de pago”. Puedes desactivarlo en Mi semana." : "Prueba otro tema o actualiza en un rato."}</p>
+      <button class="btn" data-cat="all">Ver todo</button></div>`;
+    return;
+  }
+  const read = getReadSet();
+  let html = "", rest = items;
+  if (state.groupStories) {
+    const { clusters, singletons } = clusterItems(items);
+    rest = singletons;
+    if (clusters.length) {
+      html += `<section class="block">
+        <div class="block-head"><h2>🔥 Misma historia, varios medios</h2>
+        <p>Compara cómo la cuenta cada uno. Los puntos muestran de qué lado viene cada medio.</p></div>
+        ${clusters.map(g => clusterCard(g, read)).join("")}
+      </section>`;
+    }
+  }
+  if (state.cat === "all") {
+    for (const [cid, info] of orderedCats()) {
+      const list = rest.filter(x => x.category === cid).sort(byDate);
+      if (!list.length) continue;
+      html += `<section class="block"><div class="block-head"><h2>${info.icon} ${info.name}</h2></div>
+        <div class="grid">${list.map(it => card(it, read)).join("")}</div></section>`;
+    }
+  } else if (rest.length) {
+    const info = CONFIG.categories[state.cat];
+    html += `<section class="block"><div class="block-head"><h2>${info.icon} ${info.name}</h2></div>
+      <div class="grid">${rest.sort(byDate).map(it => card(it, read)).join("")}</div></section>`;
+  }
+  if (state.errors.length) {
+    html += `<p class="footnote">${state.errors.length} de ${CONFIG.sources.length} medios no respondieron esta vez. <button class="linklike" data-tab-go="help">Ver cuáles</button></p>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderWeek() {
+  const log = getLog();
+  const week = log.filter(e => Date.now() - new Date(e.date).getTime() < 7 * 86400000);
+  const panel = $("#balance-panel");
+  if (!week.length) {
+    panel.innerHTML = `<h2>Tu equilibrio esta semana</h2>
+      <p class="sub">Aún no has leído nada esta semana. Cuando abras un artículo, aparecerá aquí de qué lado venía.</p>
+      <div class="bar"></div>`;
+  } else {
+    const g = { left: 0, center: 0, right: 0, neutral: 0, academic: 0 };
+    week.forEach(e => g[groupOf(e.bias)]++);
+    const total = week.length;
+    panel.innerHTML = `<h2>Tu equilibrio esta semana</h2>
+      <p class="sub">${total} ${total === 1 ? "lectura" : "lecturas"} en los últimos 7 días.</p>
+      <div class="bar">${GROUP_ORDER.filter(k => g[k]).map(k => `<div style="flex:${g[k]};background:${GROUPS[k].color}" title="${GROUPS[k].label}: ${g[k]}"></div>`).join("")}</div>
+      <div class="legend">${GROUP_ORDER.filter(k => g[k]).map(k => `<span><i style="background:${GROUPS[k].color}"></i>${GROUPS[k].label} ${Math.round(g[k] / total * 100)}% <small>(${g[k]})</small></span>`).join("")}</div>
+      <div class="insight">${insight(g, total)}</div>`;
+  }
+  const recent = log.slice(-8).reverse();
+  $("#reads").innerHTML = recent.length ? recent.map(e => {
+    const b = biasOf(e.bias);
+    const day = new Date(e.date).toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short" });
+    return `<li><div class="r-meta"><span>${esc(day)}</span><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${b.color};margin-right:4px"></i>${esc(e.source)}</span></div>
+      <a href="${esc(safeUrl(e.link))}" target="_blank" rel="noopener noreferrer">${esc(e.title)}</a>
+      ${e.note ? `<p class="r-note">“${esc(e.note)}”</p>` : ""}</li>`;
+  }).join("") : `<li class="r-note" style="font-style:normal">Todavía no hay lecturas. Ve a Noticias y toca un titular.</li>`;
+  $("#opt-group").checked = state.groupStories;
+  $("#opt-free").checked = state.onlyFree;
+}
+function insight(g, total) {
+  if (total < 3) return "Lee unos cuantos artículos más y aquí verás si estás leyendo de todos los lados.";
+  const suggest = grp => CONFIG.sources.filter(s => groupOf(s.bias) === grp && isFreeEnough(s.name)).slice(0, 2).map(s => s.name).join(" o ");
+  if (g.left >= g.right * 2 && g.left - g.right >= 2) return `Esta semana leíste más medios de izquierda. Para equilibrar, prueba ${suggest("right")}.`;
+  if (g.right >= g.left * 2 && g.right - g.left >= 2) return `Esta semana leíste más medios de derecha. Para equilibrar, prueba ${suggest("left")}.`;
+  return "Buen equilibrio 👏 Estás leyendo varias miradas.";
+}
+// El adaptador de sync llama a renderBalance(); lo mantenemos
+function renderBalance() { if (state.tab === "week") renderWeek(); }
+
+function buildHelp() {
+  $("#help-legend").innerHTML = GROUP_ORDER.map(k =>
+    `<div class="key"><i style="background:${GROUPS[k].color}"></i><span><b>${GROUPS[k].label}.</b> <span class="muted">${GROUPS[k].desc}</span></span></div>`).join("");
+  const errs = state.errors;
+  $("#errors-panel").hidden = !errs.length;
+  $("#errlist").innerHTML = errs.map(e => `<li>${esc(e.source.name)}: ${esc(e.error || "sin artículos")}</li>`).join("");
 }
 
 function render() {
-  const main = document.getElementById("content");
-  let items = state.items;
-  if (state.onlyFree) {
-    items = items.filter(it => {
-      const p = CONFIG.paywalls[it.source];
-      return !p || p.type === "none" || (p.type === "metered" && (p.free_per_month||0) >= 5);
-    });
-  }
+  renderChips();
+  if (state.tab === "news") renderNews();
+  if (state.tab === "week") renderWeek();
+  if (state.tab === "help") buildHelp();
+}
 
-  let html = "";
-
-  // Cluster view
-  if (state.view === "clusters") {
-    const { clusters, singletons } = clusterItems(items);
-    if (clusters.length) {
-      html += `<section id="clusters" class="scroll-mt">
-        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">🔥 Misma historia, varias fuentes <span class="text-zinc-600 ml-2">${clusters.length}</span></h2>
-        <div class="space-y-4">
-        ${clusters.map(g => {
-          const sources = new Set(g.map(x => x.source));
-          // Use the longest title as cluster headline
-          const head = g.slice().sort((a,b)=>b.title.length-a.title.length)[0];
-          return `<div class="cluster-card border rounded p-3">
-            <div class="text-xs uppercase tracking-wider text-zinc-500 mb-2">${sources.size} fuentes · ${g.length} artículos</div>
-            <div class="article-title text-base text-zinc-100 mb-3">${escapeHTML(head.title)}</div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              ${g.map(it => articleCard(it, {showAlts:false})).join("")}
-            </div>
-          </div>`;
-        }).join("")}
-        </div>
-      </section>`;
-    }
-    // Then categories with singletons
-    const ordered = Object.entries(CONFIG.categories).sort((a,b)=>a[1].order-b[1].order);
-    for (const [cid, info] of ordered) {
-      const catItems = singletons.filter(x => x.category === cid)
-        .sort((a,b) => (b.pubDate?.getTime()||0) - (a.pubDate?.getTime()||0));
-      if (!catItems.length) continue;
-      html += `<section id="${cid}" class="scroll-mt">
-        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">${info.icon} ${info.name} <span class="text-zinc-600 ml-2">${catItems.length}</span></h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          ${catItems.map(articleCard).join("")}
-        </div>
-      </section>`;
-    }
-  } else {
-    // Source view (by category like v1)
-    const ordered = Object.entries(CONFIG.categories).sort((a,b)=>a[1].order-b[1].order);
-    for (const [cid, info] of ordered) {
-      const catItems = items.filter(x => x.category === cid)
-        .sort((a,b) => (b.pubDate?.getTime()||0) - (a.pubDate?.getTime()||0));
-      if (!catItems.length) continue;
-      html += `<section id="${cid}" class="scroll-mt">
-        <h2 class="text-sm uppercase tracking-wider text-zinc-400 mb-3 font-medium">${info.icon} ${info.name} <span class="text-zinc-600 ml-2">${catItems.length}</span></h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          ${catItems.map(articleCard).join("")}
-        </div>
-      </section>`;
-    }
-  }
-
-  // Errors
-  if (state.errors.length) {
-    html += `<details class="border border-zinc-900 rounded p-3 text-xs text-zinc-500">
-      <summary class="cursor-pointer">${state.errors.length} fuente(s) no respondieron</summary>
-      <ul class="mt-2 space-y-1 ml-4">
-        ${state.errors.map(e => `<li>${escapeHTML(e.source.name)}: ${escapeHTML(e.error||"vacío")}</li>`).join("")}
-      </ul>
-    </details>`;
-  }
-
-  main.innerHTML = html || `<div class="text-center text-zinc-500 py-20">Sin artículos para mostrar.</div>`;
-
-  // Wire up note buttons
-  document.querySelectorAll(".note-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.preventDefault();
-      e.stopPropagation();
-      openNoteModal(btn.dataset);
-    });
-  });
-  // Mark read on click
-  document.querySelectorAll("a.article-title").forEach(a => {
-    a.addEventListener("click", () => {
-      markRead(a.dataset.link);
-      logRead(a.dataset.link, a.textContent.trim());
-    });
-  });
-
-  renderBalance();
-  updateViewToggles();
+function setTab(t) {
+  state.tab = t;
+  ["news", "week", "help"].forEach(v => $("#view-" + v).hidden = v !== t);
+  $$(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  window.scrollTo(0, 0);
+  render();
 }
 
 // ============================================================
-// Storage adapter
+// Storage adapter (localStorage + sync opcional entre dispositivos)
 // ============================================================
-// Toda la persistencia pasa por aqui. Hoy usa localStorage local.
-// Cuando agregues sincronizacion entre dispositivos, edita SOLO este
-// objeto + SYNC_CONFIG abajo. Ver ../sync/SYNC_PLAN.md para el plan.
-// ============================================================
+// ⚠️ Este repo es PÚBLICO: no pongas un token aquí sin entender que
+// cualquiera podría leerlo. Ver CONTEXTO_SETUP.md, Parte 5.
 const SYNC_CONFIG = {
-  enabled: false,            // TRUE cuando tengas el worker desplegado
-  endpoint: "",              // ej: "https://news-sync.tu-cuenta.workers.dev"
-  token: "",                 // secreto compartido (header X-Auth-Token)
-  intervalMs: 60000,         // cada cuanto sincronizar (60s)
-  conflictStrategy: "merge"  // "merge" (union) | "remote-wins" | "local-wins"
+  enabled: false,
+  endpoint: "",
+  token: "",
+  intervalMs: 60000,
+  conflictStrategy: "merge"
 };
 
 const Storage = {
-  // --- Implementacion local (default) ---
   _read(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw == null ? fallback : JSON.parse(raw);
-    } catch { return fallback; }
+    try { const raw = localStorage.getItem(key); return raw == null ? fallback : JSON.parse(raw); }
+    catch { return fallback; }
   },
-  _write(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-  },
-
-  // --- API publica usada por el dashboard ---
+  _write(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
   getReadSet() { return new Set(this._read("readArticles", [])); },
-  setReadSet(set) {
-    this._write("readArticles", Array.from(set).slice(-500));
-    this._scheduleSync();
-  },
-
+  setReadSet(set) { this._write("readArticles", Array.from(set).slice(-500)); this._scheduleSync(); },
   getLog() { return this._read("readingLog", []); },
-  setLog(arr) {
-    this._write("readingLog", arr.slice(-500));
-    this._scheduleSync();
-  },
-
-  getPref(key, fallback) {
-    const v = localStorage.getItem(key);
-    return v == null ? fallback : v;
-  },
-  setPref(key, val) {
-    try { localStorage.setItem(key, val); } catch {}
-  },
-
-  // --- Sincronizacion entre dispositivos ---
-  // Codigo real. Inerte hasta que SYNC_CONFIG.enabled = true y haya endpoint+token.
+  setLog(arr) { this._write("readingLog", arr.slice(-500)); this._scheduleSync(); },
   _syncTimer: null,
   _syncInFlight: false,
   _scheduleSync() {
@@ -517,351 +840,254 @@ const Storage = {
     if (this._syncInFlight) return;
     this._syncInFlight = true;
     try {
-      const headers = {
-        "Content-Type": "application/json",
-        "X-Auth-Token": SYNC_CONFIG.token
-      };
-      // PULL
+      const headers = { "Content-Type": "application/json", "X-Auth-Token": SYNC_CONFIG.token };
       let remote;
       try {
         const res = await fetch(SYNC_CONFIG.endpoint + "/state", { headers });
         if (!res.ok) throw new Error("HTTP " + res.status);
         remote = await res.json();
-      } catch (e) {
-        console.warn("Sync pull failed, sigo en local:", e.message);
-        return;
-      }
-      // MERGE
-      const local = this.snapshot();
-      const merged = mergeStates(local, remote);
-      // APPLY LOCAL
+      } catch (e) { console.warn("Sync pull failed, sigo en local:", e.message); return; }
+      const merged = mergeStates(this.snapshot(), remote);
       this.applySnapshot(merged);
-      // PUSH
       try {
-        await fetch(SYNC_CONFIG.endpoint + "/state", {
-          method: "PUT",
-          headers,
-          body: JSON.stringify(merged)
-        });
-      } catch (e) {
-        console.warn("Sync push failed:", e.message);
-      }
-      // Re-render (otras devices pudieron haber marcado articulos como leidos)
-      if (typeof render === "function") render();
-      if (typeof renderBalance === "function") renderBalance();
-    } finally {
-      this._syncInFlight = false;
-    }
+        await fetch(SYNC_CONFIG.endpoint + "/state", { method: "PUT", headers, body: JSON.stringify(merged) });
+      } catch (e) { console.warn("Sync push failed:", e.message); }
+      render();
+    } finally { this._syncInFlight = false; }
   },
-
-  // --- Helpers de snapshot ---
-  snapshot() {
-    return {
-      readArticles: Array.from(this.getReadSet()),
-      readingLog: this.getLog(),
-      lastModified: Date.now()
-    };
-  },
+  snapshot() { return { readArticles: Array.from(this.getReadSet()), readingLog: this.getLog(), lastModified: Date.now() }; },
   applySnapshot(s) {
     if (s?.readArticles) this._write("readArticles", s.readArticles.slice(-500));
-    if (s?.readingLog)   this._write("readingLog",   s.readingLog.slice(-500));
+    if (s?.readingLog) this._write("readingLog", s.readingLog.slice(-500));
   }
 };
 
-// ============================================================
-// mergeStates — idempotente y conmutativo
-// Dos devices escribiendo simultaneo no se pisan: union de sets
-// + dedupe por link manteniendo la nota mas larga.
-// ============================================================
 function mergeStates(local, remote) {
-  const readArticles = Array.from(
-    new Set([...(local.readArticles || []), ...(remote.readArticles || [])])
-  ).slice(-1000);
-
+  const readArticles = Array.from(new Set([...(local.readArticles || []), ...(remote.readArticles || [])])).slice(-1000);
   const byLink = new Map();
   for (const e of (local.readingLog || []).concat(remote.readingLog || [])) {
     if (!e || !e.link) continue;
-    const existing = byLink.get(e.link);
-    if (!existing) {
-      byLink.set(e.link, e);
-    } else {
-      const lenNew = (e.note || "").length;
-      const lenOld = (existing.note || "").length;
-      if (lenNew > lenOld || (lenNew === lenOld && new Date(e.date) > new Date(existing.date))) {
-        byLink.set(e.link, e);
-      }
-    }
+    const ex = byLink.get(e.link);
+    if (!ex) { byLink.set(e.link, e); continue; }
+    const ln = (e.note || "").length, lo = (ex.note || "").length;
+    if (ln > lo || (ln === lo && new Date(e.date) > new Date(ex.date))) byLink.set(e.link, e);
   }
-  const readingLog = Array.from(byLink.values())
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 1000);
-
+  const readingLog = Array.from(byLink.values()).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-1000);
   return { readArticles, readingLog, lastModified: Date.now() };
 }
 
-// ============================================================
-// Wrappers (mantienen API existente del codigo)
-// ============================================================
 function getReadSet() { return Storage.getReadSet(); }
-function markRead(link) {
-  const s = Storage.getReadSet();
-  s.add(link);
-  Storage.setReadSet(s);
-}
-
 function getLog() { return Storage.getLog(); }
-function setLog(arr) { Storage.setLog(arr); }
-function logRead(link, title) {
-  // Avoid duplicates from same session
+function markRead(link) { const s = getReadSet(); s.add(link); Storage.setReadSet(s); }
+function findItem(link) { return state.items.find(x => x.link === link); }
+function logRead(link) {
   const log = getLog();
-  if (log.some(e => e.link === link && (Date.now() - new Date(e.date).getTime()) < 86400000)) return;
-  // Look up source/bias from currently loaded items
-  const it = state.items.find(x => x.link === link);
-  log.push({
-    date: new Date().toISOString(),
-    source: it?.source || "?",
-    bias: it?.bias || "na",
-    title: title || it?.title || "",
-    link, note: ""
-  });
-  setLog(log);
-  renderBalance();
+  if (log.some(e => e.link === link && Date.now() - new Date(e.date).getTime() < 86400000)) return;
+  const it = findItem(link);
+  log.push({ date: new Date().toISOString(), source: it?.source || "?", bias: it?.bias || "na", title: it?.title || "", link, note: "" });
+  Storage.setLog(log);
 }
-function appendLogWithNote(meta, note) {
+function addNoteToLog(it, note) {
   const log = getLog();
-  log.push({
-    date: new Date().toISOString(),
-    source: meta.source, bias: meta.bias,
-    title: meta.title, link: meta.link, note
-  });
-  setLog(log);
-  renderBalance();
+  const recent = log.findIndex(e => e.link === it.link && Date.now() - new Date(e.date).getTime() < 86400000);
+  if (recent >= 0) log[recent].note = note;
+  else log.push({ date: new Date().toISOString(), source: it.source, bias: it.bias, title: it.title, link: it.link, note });
+  Storage.setLog(log);
 }
 
 // ============================================================
-// Bias balance widget
+// Nota rápida
 // ============================================================
-function renderBalance() {
-  const log = getLog();
-  const sevenDaysAgo = Date.now() - 7*86400000;
-  const recent = log.filter(e => new Date(e.date).getTime() > sevenDaysAgo);
-  if (!recent.length) {
-    document.getElementById("balance-bar").innerHTML = `<div style="flex:1;background:#27272a"></div>`;
-    document.getElementById("balance-legend").innerHTML = `<span class="text-zinc-500">Sin lecturas registradas. Haz click en titulares o usa 📝 nota.</span>`;
+let noteItem = null;
+function openNote(link) {
+  noteItem = findItem(link);
+  if (!noteItem) return;
+  $("#note-meta").textContent = `${noteItem.title} — ${noteItem.source}`;
+  $("#note-text").value = "";
+  $("#note-overlay").hidden = false;
+  setTimeout(() => $("#note-text").focus(), 50);
+}
+function closeNote() { $("#note-overlay").hidden = true; noteItem = null; }
+$("#note-cancel").onclick = closeNote;
+$("#note-overlay").addEventListener("click", e => { if (e.target.id === "note-overlay") closeNote(); });
+$("#note-save").onclick = () => {
+  const it = noteItem; if (!it) return;
+  const note = $("#note-text").value.trim();
+  const date = new Date().toISOString().slice(0, 10);
+  const md = `## ${it.title}\n\n- **Fuente:** ${it.source} (${biasOf(it.bias).label})\n- **Fecha:** ${date}\n- **Link:** ${it.link}\n\n${note || "_(sin nota)_"}\n`;
+  if ($("#note-log").checked) { addNoteToLog(it, note); markRead(it.link); }
+  const done = () => { closeNote(); toast("Nota guardada y copiada. Pégala en tu carpeta de notas."); render(); };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(md).then(done).catch(() => { downloadText(md, `${date}-${slug(it.source)}.md`); closeNote(); toast("Nota guardada y descargada."); render(); });
+  } else { downloadText(md, `${date}-${slug(it.source)}.md`); closeNote(); toast("Nota guardada y descargada."); render(); }
+};
+function downloadText(text, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ============================================================
+// Aviso flotante
+// ============================================================
+let toastT = null;
+function toast(msg, ms = 3200) {
+  let el = $("#toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg; el.style.opacity = "1";
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.style.opacity = "0"; }, ms);
+}
+
+// ============================================================
+// Bienvenida (solo la primera vez)
+// ============================================================
+const SLIDES = [
+  { art: "📰", title: "Tus noticias en un solo lugar", text: `Reunimos ${CONFIG.sources.length} medios de Colombia, EE.UU. y el mundo. Sin algoritmo: tú decides qué leer.` },
+  { art: "🎨", title: "Cada medio tiene un color", text: "El color te dice de qué lado viene la noticia. Leer de varios lados te da el cuadro completo.", legend: true },
+  { art: "🔥", title: "Misma historia, varios medios", text: "Cuando varios medios cuentan lo mismo, los agrupamos para que compares cómo lo cuenta cada uno." },
+  { art: "⏱", title: "30 minutos al día", text: "Toca el temporizador al empezar. Cuando suene, cierras. Una idea entendida vale más que 50 titulares." }
+];
+let slide = 0;
+function drawTour() {
+  const s = SLIDES[slide];
+  $("#tour-body").innerHTML = `<div class="tour-art" aria-hidden="true">${s.art}</div>
+    <h2 id="tour-h">${s.title}</h2><p>${s.text}</p>
+    ${s.legend ? `<div class="legend">${GROUP_ORDER.map(k => `<span><i style="background:${GROUPS[k].color}"></i>${GROUPS[k].label}</span>`).join("")}</div>` : ""}`;
+  $("#tour-dots").innerHTML = SLIDES.map((_, i) => `<i class="${i === slide ? "on" : ""}"></i>`).join("");
+  $("#tour-next").textContent = slide === SLIDES.length - 1 ? "Empezar" : "Siguiente";
+  $("#tour-skip").hidden = slide === SLIDES.length - 1;
+}
+function openTour() { slide = 0; drawTour(); $("#tour-overlay").hidden = false; }
+function closeTour() { $("#tour-overlay").hidden = true; prefs.set("onboarded", "1"); }
+$("#tour-next").onclick = () => { if (slide < SLIDES.length - 1) { slide++; drawTour(); } else closeTour(); };
+$("#tour-skip").onclick = closeTour;
+$("#tour-again").onclick = openTour;
+
+// ============================================================
+// Eventos generales
+// ============================================================
+document.addEventListener("click", e => {
+  const a = e.target.closest("a.title[data-link]");
+  if (a) {
+    markRead(a.dataset.link);
+    logRead(a.dataset.link);
+    a.closest(".card, .c-item")?.classList.add("read");
     return;
   }
-  const groups = { left:0, center:0, right:0, neutral:0, academic:0 };
-  recent.forEach(e => {
-    const g = CONFIG.biases[e.bias]?.group || "neutral";
-    groups[g] = (groups[g]||0) + 1;
-  });
-  const total = recent.length;
-  const order = ["left","center","right","neutral","academic"];
-  const colors = { left:"#3b82f6", center:"#9ca3af", right:"#ef4444", neutral:"#10b981", academic:"#a78bfa" };
-  const labels = { left:"Izq", center:"Centro", right:"Der", neutral:"Agencia", academic:"Académico" };
-  const bar = document.getElementById("balance-bar");
-  bar.innerHTML = order.map(g => {
-    const n = groups[g] || 0;
-    if (!n) return "";
-    return `<div style="flex:${n};background:${colors[g]}" title="${labels[g]}: ${n}"></div>`;
-  }).join("");
-  document.getElementById("balance-legend").innerHTML =
-    order.map(g => {
-      const n = groups[g] || 0;
-      if (!n) return "";
-      const pct = Math.round(n/total*100);
-      return `<span><span class="bias-chip" style="background:${colors[g]}"></span>${labels[g]} ${pct}% <span class="text-zinc-600">(${n})</span></span>`;
-    }).join("") +
-    `<span class="ml-auto text-zinc-500">${total} lecturas</span>`;
-}
-
-// ============================================================
-// Note modal
-// ============================================================
-function openNoteModal(meta) {
-  const modal = document.getElementById("note-modal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.getElementById("modal-meta").innerHTML =
-    `<div><strong>${escapeHTML(meta.title)}</strong></div>
-     <div class="mt-1">${escapeHTML(meta.source)} · ${escapeHTML(CONFIG.biases[meta.bias]?.label || meta.bias)}</div>`;
-  document.getElementById("modal-text").value = "";
-  document.getElementById("modal-text").focus();
-  document.getElementById("modal-copy").onclick = () => {
-    const note = document.getElementById("modal-text").value.trim();
-    const date = new Date().toISOString().slice(0,10);
-    const md = `## ${meta.title}\n\n- **Fuente:** ${meta.source} (${CONFIG.biases[meta.bias]?.label || meta.bias})\n- **Fecha:** ${date}\n- **Link:** ${meta.link}\n\n${note || "_(sin nota)_"}\n`;
-    navigator.clipboard.writeText(md).then(() => {
-      if (document.getElementById("modal-add-log").checked) {
-        appendLogWithNote(meta, note);
-      }
-      closeModal();
-      flashStatus("📋 Copiado. Pégalo en /notes/" + date + "-" + slug(meta.source) + ".md");
-    }).catch(() => {
-      // Fallback: download
-      const blob = new Blob([md], {type:"text/markdown"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${date}-${slug(meta.source)}.md`;
-      a.click();
-      closeModal();
-    });
-  };
-}
-function closeModal() {
-  document.getElementById("note-modal").classList.add("hidden");
-  document.getElementById("note-modal").classList.remove("flex");
-}
-document.getElementById("modal-cancel").onclick = closeModal;
-document.getElementById("note-modal").addEventListener("click", e => {
-  if (e.target.id === "note-modal") closeModal();
+  const nb = e.target.closest("[data-note]");
+  if (nb) { openNote(nb.dataset.note); return; }
+  const chip = e.target.closest("[data-cat]");
+  if (chip) { state.cat = chip.dataset.cat; render(); window.scrollTo({ top: 0 }); return; }
+  const tg = e.target.closest("[data-tab-go]");
+  if (tg) { setTab(tg.dataset.tabGo); return; }
+  if (e.target.closest('[data-action="refresh"]')) refresh();
 });
-function slug(s) {
-  return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
-    .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
-}
-
-// ============================================================
-// Status flash
-// ============================================================
-let flashTimeout = null;
-function flashStatus(msg) {
-  let el = document.getElementById("flash");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "flash";
-    el.className = "fixed bottom-4 left-1/2 -translate-x-1/2 bg-zinc-100 text-zinc-900 text-xs px-3 py-2 rounded shadow-lg z-50";
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  el.style.opacity = "1";
-  clearTimeout(flashTimeout);
-  flashTimeout = setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.5s"; }, 3000);
-}
-
-// ============================================================
-// View toggle
-// ============================================================
-function updateViewToggles() {
-  document.querySelectorAll(".view-toggle").forEach(b => {
-    if (b.dataset.view === state.view) {
-      b.classList.add("bg-zinc-800","text-zinc-100","border-zinc-600");
-      b.classList.remove("text-zinc-400");
-    } else {
-      b.classList.remove("bg-zinc-800","text-zinc-100","border-zinc-600");
-      b.classList.add("text-zinc-400");
-    }
-  });
-  document.getElementById("only-free").checked = state.onlyFree;
-}
-document.querySelectorAll(".view-toggle").forEach(b => {
-  b.addEventListener("click", () => {
-    state.view = b.dataset.view;
-    localStorage.setItem("view", state.view);
-    render();
-  });
+$$(".tab").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+$("#opt-group").addEventListener("change", e => {
+  state.groupStories = e.target.checked;
+  prefs.set("view", state.groupStories ? "clusters" : "source");
+  toast(state.groupStories ? "Historias repetidas agrupadas." : "Ahora ves cada artículo por separado.");
 });
-document.getElementById("only-free").addEventListener("change", e => {
+$("#opt-free").addEventListener("change", e => {
   state.onlyFree = e.target.checked;
-  localStorage.setItem("onlyFree", state.onlyFree ? "1" : "0");
-  render();
+  prefs.set("onlyFree", state.onlyFree ? "1" : "0");
+  toast(state.onlyFree ? "Medios de pago ocultos." : "Mostrando todos los medios.");
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (!$("#note-overlay").hidden) closeNote(); }
 });
 
-// ============================================================
-// Export reading log
-// ============================================================
-document.getElementById("export-log").addEventListener("click", () => {
+// Descargar lecturas
+$("#export-btn").addEventListener("click", () => {
   const log = getLog();
-  if (!log.length) { flashStatus("Reading log vacío."); return; }
+  if (!log.length) { toast("Todavía no hay lecturas para descargar."); return; }
   const lines = [
-    `# Reading log — exportado ${new Date().toISOString().slice(0,16).replace("T"," ")}`,
-    "",
+    `# Reading log — exportado ${new Date().toISOString().slice(0, 16).replace("T", " ")}`, "",
     "| Fecha | Fuente | Sesgo | Título | Link | Nota |",
     "|-------|--------|-------|--------|------|------|"
   ];
   log.slice().reverse().forEach(e => {
-    const date = new Date(e.date).toISOString().slice(0,10);
-    const note = (e.note||"").replace(/\|/g,"\\|").replace(/\n/g," ");
-    const title = (e.title||"").replace(/\|/g,"\\|");
-    lines.push(`| ${date} | ${e.source} | ${CONFIG.biases[e.bias]?.label||e.bias} | ${title} | ${e.link} | ${note} |`);
+    const date = new Date(e.date).toISOString().slice(0, 10);
+    const clean = s => (s || "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+    lines.push(`| ${date} | ${clean(e.source)} | ${biasOf(e.bias).label} | ${clean(e.title)} | ${e.link} | ${clean(e.note)} |`);
   });
-  const blob = new Blob([lines.join("\n")], {type:"text/markdown"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `reading-log-${new Date().toISOString().slice(0,10)}.md`;
-  a.click();
+  downloadText(lines.join("\n"), `reading-log-${new Date().toISOString().slice(0, 10)}.md`);
+  toast("Lecturas descargadas.");
 });
 
 // ============================================================
-// Refresh
+// Actualizar
 // ============================================================
 async function refresh() {
-  const btn = document.getElementById("refresh-btn");
-  btn.disabled = true; btn.textContent = "Cargando…";
-  document.getElementById("last-refresh").textContent = "Cargando feeds…";
+  const btn = $("#refresh-btn");
+  if (btn.disabled) return;
+  btn.disabled = true; btn.classList.add("is-loading");
+  state.loading = true;
+  $("#status").textContent = "Buscando noticias…";
+  render();
   const results = await Promise.all(CONFIG.sources.map(fetchFeed));
   state.items = results.flatMap(r => r.items);
-  state.errors = results.filter(r => r.error || r.items.length === 0);
+  state.errors = results.filter(r => r.error || !r.items.length);
+  state.loading = false;
   const ok = CONFIG.sources.length - state.errors.length;
-  const t = new Date().toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
-  document.getElementById("last-refresh").textContent = `Actualizado ${t} · ${state.items.length} artículos · ${ok}/${CONFIG.sources.length} fuentes OK`;
+  const t = new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+  $("#status").textContent = state.items.length ? `Actualizado a las ${t}. ${ok} de ${CONFIG.sources.length} medios.` : "Sin conexión con los medios";
+  btn.disabled = false; btn.classList.remove("is-loading");
   render();
-  btn.disabled = false; btn.textContent = "Actualizar";
 }
-document.getElementById("refresh-btn").addEventListener("click", refresh);
+$("#refresh-btn").addEventListener("click", refresh);
 
 // ============================================================
-// Timer
+// Temporizador de 30 minutos
 // ============================================================
 let timerInt = null;
-document.getElementById("start-timer").addEventListener("click", () => {
-  if (timerInt) {
-    clearInterval(timerInt); timerInt = null;
-    document.getElementById("timer").textContent = "";
-    document.getElementById("start-timer").textContent = "Iniciar 30 min";
-    return;
-  }
-  const end = Date.now() + 30*60*1000;
-  document.getElementById("start-timer").textContent = "Detener";
+const timerBtn = $("#timer-btn"), timerLabel = $("#timer-label");
+function stopTimer(label = "30 min") {
+  clearInterval(timerInt); timerInt = null;
+  timerBtn.classList.remove("on");
+  timerLabel.textContent = label;
+  timerBtn.setAttribute("aria-label", "Iniciar temporizador de 30 minutos");
+}
+timerBtn.addEventListener("click", () => {
+  if (timerInt) { stopTimer(); toast("Temporizador detenido."); return; }
+  const end = Date.now() + 30 * 60 * 1000;
+  timerBtn.classList.add("on");
+  timerBtn.setAttribute("aria-label", "Detener temporizador");
   const tick = () => {
     const left = end - Date.now();
     if (left <= 0) {
-      clearInterval(timerInt); timerInt = null;
-      document.getElementById("timer").textContent = "⏰ ¡30 min! Cierra esto.";
-      document.getElementById("start-timer").textContent = "Iniciar 30 min";
+      stopTimer("¡Listo!");
+      toast("⏰ Pasaron 30 minutos. Buen momento para cerrar.", 8000);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
       return;
     }
-    const m = Math.floor(left/60000), s = Math.floor((left%60000)/1000);
-    document.getElementById("timer").textContent = `${m}:${s.toString().padStart(2,"0")}`;
+    const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+    timerLabel.textContent = `${m}:${String(s).padStart(2, "0")}`;
   };
   tick(); timerInt = setInterval(tick, 1000);
+  toast("Temporizador en marcha: 30 minutos.");
 });
 
 // ============================================================
-// Service worker (PWA installable)
+// PWA + sync
 // ============================================================
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(err => console.warn("SW registration failed:", err));
-  });
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(err => console.warn("SW:", err)));
 }
-
-// ============================================================
-// Sync periodico (inerte si SYNC_CONFIG.enabled = false)
-// ============================================================
 if (SYNC_CONFIG.enabled && SYNC_CONFIG.endpoint && SYNC_CONFIG.token) {
-  // Pull inicial al cargar
   Storage.sync();
-  // Pull periodico
   setInterval(() => Storage.sync(), SYNC_CONFIG.intervalMs);
-  // Sync al volver al tab (uso en otro device mientras tanto)
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) Storage.sync();
-  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) Storage.sync(); });
 }
 
-// Initial
-renderBalance();
+// ============================================================
+// Inicio
+// ============================================================
+setTab("news");
+if (prefs.get("onboarded", "0") !== "1") openTour();
 refresh();
 </script>
 </body>
